@@ -8,86 +8,95 @@
     <div class="row justify-content-center">
         <div class="col-lg-10 col-xl-8">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Permisos de {{ usuario.username }}</h5>
                     <a href="{% url 'mantenedor_usuarios' %}" class="btn btn-sm btn-outline-light">
                         <i class="fas fa-arrow-left me-1"></i>Volver
                     </a>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <form method="post" class="d-flex flex-column gap-4">
                         {% csrf_token %}
 
-                        <h6 class="text-uppercase text-muted">Grupos</h6>
-                        <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
-                            {% for checkbox in form.groups %}
-                                <div class="col">
-                                    <label class="form-check border rounded p-3 h-100 d-flex align-items-center gap-2">
-                                        {{ checkbox.tag }}
-                                        <span>{{ checkbox.choice_label }}</span>
-                                    </label>
-                                </div>
-                            {% empty %}
-                                <div class="col">
-                                    <div class="alert alert-info mb-0">No hay grupos configurados.</div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                        {% if form.groups.errors %}
-                            <div class="alert alert-danger">
-                                {% for error in form.groups.errors %}
-                                    <div>{{ error }}</div>
+                        <fieldset class="border rounded-3 p-3 p-md-4 mb-0 bg-light">
+                            <legend class="float-none w-auto px-2 text-primary fw-semibold text-uppercase small mb-0">Asignación a grupos</legend>
+                            <p class="text-muted small mb-3">Selecciona los grupos a los que pertenecerá el usuario para heredar permisos de forma rápida.</p>
+
+                            <div class="row row-cols-1 row-cols-md-2 g-3">
+                                {% for checkbox in form.groups %}
+                                    <div class="col">
+                                        <label class="form-check border rounded-3 p-3 h-100 d-flex align-items-center gap-2 bg-white">
+                                            {{ checkbox.tag }}
+                                            <span class="fw-semibold">{{ checkbox.choice_label }}</span>
+                                        </label>
+                                    </div>
+                                {% empty %}
+                                    <div class="col">
+                                        <div class="alert alert-info mb-0">No hay grupos configurados.</div>
+                                    </div>
                                 {% endfor %}
                             </div>
-                        {% endif %}
 
-                        <h6 class="text-uppercase text-muted">Permisos individuales</h6>
-                        {% if form.user_permissions.errors %}
-                            <div class="alert alert-danger">
-                                {% for error in form.user_permissions.errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                            {% if form.groups.errors %}
+                                <div class="alert alert-danger mt-3 mb-0">
+                                    {% for error in form.groups.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </fieldset>
 
-                        <div class="accordion" id="accordionPermisos">
-                            {% for grupo in permisos_por_app %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
-                                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ forloop.counter }}">
-                                            {{ grupo.app_label|capfirst }}
-                                        </button>
-                                    </h2>
-                                    <div id="collapse-{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading-{{ forloop.counter }}" data-bs-parent="#accordionPermisos">
-                                        <div class="accordion-body">
-                                            <div class="row row-cols-1 row-cols-md-2 g-3">
-                                                {% for permiso in grupo.permisos %}
-                                                    <div class="col">
-                                                        <div class="form-check border rounded p-3 h-100">
-                                                            <input type="checkbox" name="user_permissions" value="{{ permiso.id }}" id="perm-{{ permiso.id }}" class="form-check-input" {% if permiso.checked %}checked{% endif %}>
-                                                            <label class="form-check-label ms-2" for="perm-{{ permiso.id }}">
-                                                                <strong>{{ permiso.nombre }}</strong>
-                                                                <span class="d-block text-muted small">{{ permiso.codename }}</span>
-                                                            </label>
+                        <fieldset class="border rounded-3 p-3 p-md-4 mb-0">
+                            <legend class="float-none w-auto px-2 text-primary fw-semibold text-uppercase small mb-0">Permisos individuales</legend>
+                            <p class="text-muted small mb-3">Refina los permisos seleccionando opciones específicas para este usuario.</p>
+
+                            {% if form.user_permissions.errors %}
+                                <div class="alert alert-danger mb-3">
+                                    {% for error in form.user_permissions.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <div class="accordion" id="accordionPermisos">
+                                {% for grupo in permisos_por_app %}
+                                    <div class="accordion-item border-0 border-bottom">
+                                        <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
+                                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ forloop.counter }}">
+                                                {{ grupo.app_label|capfirst }}
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading-{{ forloop.counter }}" data-bs-parent="#accordionPermisos">
+                                            <div class="accordion-body">
+                                                <div class="row row-cols-1 row-cols-md-2 g-3">
+                                                    {% for permiso in grupo.permisos %}
+                                                        <div class="col">
+                                                            <div class="form-check border rounded-3 p-3 h-100 bg-light">
+                                                                <input type="checkbox" name="user_permissions" value="{{ permiso.id }}" id="perm-{{ permiso.id }}" class="form-check-input" {% if permiso.checked %}checked{% endif %}>
+                                                                <label class="form-check-label ms-2" for="perm-{{ permiso.id }}">
+                                                                    <strong>{{ permiso.nombre }}</strong>
+                                                                    <span class="d-block text-muted small">{{ permiso.codename }}</span>
+                                                                </label>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                {% empty %}
-                                                    <div class="col">
-                                                        <div class="text-muted">No hay permisos registrados.</div>
-                                                    </div>
-                                                {% endfor %}
+                                                    {% empty %}
+                                                        <div class="col">
+                                                            <div class="text-muted">No hay permisos registrados.</div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            {% empty %}
-                                <div class="alert alert-info">No hay permisos disponibles en el sistema.</div>
-                            {% endfor %}
-                        </div>
+                                {% empty %}
+                                    <div class="alert alert-info mb-0">No hay permisos disponibles en el sistema.</div>
+                                {% endfor %}
+                            </div>
+                        </fieldset>
 
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="{% url 'mantenedor_usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-secondary">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'mantenedor_usuarios' %}" class="btn btn-outline-primary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Guardar permisos
                             </button>
                         </div>
