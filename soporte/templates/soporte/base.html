@@ -22,6 +22,7 @@
             margin-left: -15rem;
             transition: margin .25s ease-out;
             background-color: #343a40; /* Fondo oscuro */
+            position: relative;
         }
 
         #sidebar-wrapper .sidebar-heading {
@@ -30,6 +31,18 @@
             color: white;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             cursor: pointer;
+            transition: all .25s ease-out;
+        }
+
+        #sidebarHeadingToggle.floating-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 0;
+            background-color: #343a40;
+            border-radius: 0 0.75rem 0.75rem 0;
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+            z-index: 1050;
+            border-bottom: none;
         }
 
         #sidebar-wrapper .list-group {
@@ -130,12 +143,53 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const wrapper = document.getElementById("wrapper");
-        const toggleSidebar = function() {
-            wrapper.classList.toggle("toggled");
+        const sidebarHeadingToggle = document.getElementById("sidebarHeadingToggle");
+        const sidebarToggleButton = document.getElementById("sidebarToggle");
+        const desktopQuery = window.matchMedia("(min-width: 768px)");
+
+        let isSidebarVisible = false;
+
+        const updateHeadingAppearance = () => {
+            if (isSidebarVisible) {
+                sidebarHeadingToggle.classList.remove("floating-toggle");
+            } else {
+                sidebarHeadingToggle.classList.add("floating-toggle");
+            }
         };
 
-        document.getElementById("sidebarToggle").addEventListener("click", toggleSidebar);
-        document.getElementById("sidebarHeadingToggle").addEventListener("click", toggleSidebar);
+        const updateSidebarStateForViewport = () => {
+            if (desktopQuery.matches) {
+                // En pantallas grandes la barra lateral está visible por defecto.
+                wrapper.classList.remove("toggled");
+                isSidebarVisible = true;
+            } else {
+                // En pantallas pequeñas la barra lateral está oculta por defecto.
+                wrapper.classList.remove("toggled");
+                isSidebarVisible = false;
+            }
+            updateHeadingAppearance();
+        };
+
+        const toggleSidebar = () => {
+            wrapper.classList.toggle("toggled");
+            if (desktopQuery.matches) {
+                isSidebarVisible = !wrapper.classList.contains("toggled");
+            } else {
+                isSidebarVisible = wrapper.classList.contains("toggled");
+            }
+            updateHeadingAppearance();
+        };
+
+        sidebarToggleButton?.addEventListener("click", toggleSidebar);
+        sidebarHeadingToggle.addEventListener("click", toggleSidebar);
+
+        if (typeof desktopQuery.addEventListener === "function") {
+            desktopQuery.addEventListener("change", updateSidebarStateForViewport);
+        } else if (typeof desktopQuery.addListener === "function") {
+            desktopQuery.addListener(updateSidebarStateForViewport);
+        }
+
+        updateSidebarStateForViewport();
     </script>
 </body>
 </html>
