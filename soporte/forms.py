@@ -15,10 +15,25 @@ class TicketForm(forms.ModelForm):
 
     class Meta:
         model = Ticket
-        fields = ['titulo', 'categoria', 'prioridad', 'tipo_ticket', 'area_funcional', 'descripcion']
+        fields = [
+            'titulo',
+            'categoria',
+            'prioridad',
+            'tipo_ticket',
+            'area_funcional',
+            'descripcion',
+            'fecha_compromiso_respuesta',
+            'estado_sla',
+        ]
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 6}),
+            'fecha_compromiso_respuesta': forms.DateTimeInput(attrs={'readonly': True}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fecha_compromiso_respuesta'].disabled = True
+        self.fields['estado_sla'].disabled = True
 
 
 class TechTicketForm(forms.ModelForm):
@@ -26,7 +41,20 @@ class TechTicketForm(forms.ModelForm):
 
     class Meta:
         model = Ticket
-        fields = ["estado", "prioridad"]
+        fields = [
+            "estado",
+            "prioridad",
+            "fecha_compromiso_respuesta",
+            "estado_sla",
+        ]
+        widgets = {
+            'fecha_compromiso_respuesta': forms.DateTimeInput(attrs={'readonly': True}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fecha_compromiso_respuesta'].disabled = True
+        self.fields['estado_sla'].disabled = True
 
 
 class CommentForm(forms.ModelForm):
