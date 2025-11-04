@@ -1,0 +1,227 @@
+{% extends 'soporte/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Principal{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5 fw-bold">Dashboard Principal</h1>
+            <p class="lead text-muted">Resumen de la actividad de tickets y métricas clave.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'home_tickets' %}" class="card-link text-decoration-none">
+                <div class="card border-left-primary shadow h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total de Tickets</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">{{ total_tickets }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-ticket-alt fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'home_tickets' %}?estado=abierto" class="card-link text-decoration-none">
+                <div class="card border-left-danger shadow h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-danger text-uppercase mb-1">Tickets Abiertos</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">{{ tickets_abiertos }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-folder-open fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'home_tickets' %}?estado=progreso" class="card-link text-decoration-none">
+                <div class="card border-left-warning shadow h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">En Progreso</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">{{ tickets_en_progreso }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-spinner fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'home_tickets' %}?estado=cerrado" class="card-link text-decoration-none">
+                <div class="card border-left-success shadow h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-success text-uppercase mb-1">Cerrados / Resueltos</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">{{ tickets_cerrados }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="m-0 fw-bold"><i class="fas fa-chart-pie me-2"></i>Tickets por Prioridad</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chart-prioridad"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="m-0 fw-bold"><i class="fas fa-chart-bar me-2"></i>Tickets por Estado</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chart-estado"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            <h6 class="m-0 fw-bold"><i class="fas fa-history me-2"></i>Últimos Tickets Creados</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th class="text-center">Prioridad</th>
+                            <th class="text-center">Estado</th>
+                            <th>Solicitante</th>
+                            <th>Fecha de Creación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets_recientes %}
+                        <tr>
+                            <td>#{{ ticket.id }}</td>
+                            <td><a href="{% url 'detalle_ticket' ticket.id %}"><strong>{{ ticket.titulo }}</strong></a></td>
+                            <td class="text-center">
+                                {% if ticket.prioridad == 'critica' %}<span class="badge rounded-pill bg-danger">Crítica</span>{% elif ticket.prioridad == 'alta' %}<span class="badge rounded-pill bg-warning text-dark">Alta</span>{% else %}<span class="badge rounded-pill bg-info text-dark">Media/Baja</span>{% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if ticket.estado == 'cerrado' or ticket.estado == 'resuelto' %}<span class="badge rounded-pill bg-success">{{ ticket.get_estado_display }}</span>{% elif ticket.estado == 'progreso' %}<span class="badge rounded-pill bg-primary">{{ ticket.get_estado_display }}</span>{% else %}<span class="badge rounded-pill bg-light text-dark">{{ ticket.get_estado_display }}</span>{% endif %}
+                            </td>
+                            <td>{{ ticket.solicitante.username }}</td>
+                            <td>{{ ticket.fecha_creacion|date:"d M Y, H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No hay tickets recientes para mostrar.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ tickets_por_estado|json_script:"tickets-estado-data" }}
+{{ tickets_por_prioridad|json_script:"tickets-prioridad-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // SCRIPT COMPLETO PARA DIBUJAR LOS GRÁFICOS
+    document.addEventListener('DOMContentLoaded', function() {
+        const ticketsPorEstadoData = JSON.parse(document.getElementById('tickets-estado-data').textContent);
+        const ticketsPorPrioridadData = JSON.parse(document.getElementById('tickets-prioridad-data').textContent);
+
+        const estadosLabels = ticketsPorEstadoData.map(item => item.estado.charAt(0).toUpperCase() + item.estado.slice(1));
+        const estadosTotals = ticketsPorEstadoData.map(item => item.total);
+
+        const prioridadesLabels = ticketsPorPrioridadData.map(item => item.prioridad.charAt(0).toUpperCase() + item.prioridad.slice(1));
+        const prioridadesTotals = ticketsPorPrioridadData.map(item => item.total);
+        
+        const backgroundColors = ['#4e73df', '#1cc88a', '#36b9cc', '#e74a3b', '#f6c23e'];
+        const priorityColors = {
+            'Baja': '#36b9cc',
+            'Media': '#4e73df',
+            'Alta': '#f6c23e',
+            'Critica': '#e74a3b',
+        };
+        const stateColors = {
+            'Abierto': '#f6c23e',
+            'Progreso': '#4e73df',
+            'Resuelto': '#1cc88a',
+            'Cerrado': '#858796',
+        };
+
+        // Gráfico de Barras: Tickets por Estado
+        new Chart(document.getElementById('chart-estado'), {
+            type: 'bar',
+            data: {
+                labels: estadosLabels,
+                datasets: [{
+                    label: 'Cantidad',
+                    data: estadosTotals,
+                    backgroundColor: estadosLabels.map(label => stateColors[label] || '#dddfeb'),
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        // Gráfico de Dona: Tickets por Prioridad
+        new Chart(document.getElementById('chart-prioridad'), {
+            type: 'doughnut',
+            data: {
+                labels: prioridadesLabels,
+                datasets: [{
+                    data: prioridadesTotals,
+                    backgroundColor: prioridadesLabels.map(label => priorityColors[label] || '#dddfeb'),
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    });
+</script>
+
+<style>
+    .card-link { text-decoration: none; color: inherit; }
+    .card-hover:hover {
+        transform: translateY(-5px);
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+    .border-left-danger { border-left: 0.25rem solid #e74a3b !important; }
+    .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+    .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+    .text-xs { font-size: 0.8rem; }
+    .text-gray-300 { color: #dddfeb !important; }
+    .text-gray-800 { color: #5a5c69 !important; }
+    .fw-bold { font-weight: 700 !important; }
+</style>
+{% endblock %}

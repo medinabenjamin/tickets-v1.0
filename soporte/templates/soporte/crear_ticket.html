@@ -1,0 +1,85 @@
+{% extends 'soporte/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Crear Nuevo Ticket{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            
+            <div class="card shadow border-0">
+                <div class="card-header bg-dark text-white p-4">
+                    <h2 class="mb-0"><i class="fas fa-pencil-alt me-2"></i> Crear Nuevo Ticket</h2>
+                    <p class="mb-0 text-white-50">Por favor, completa todos los campos para registrar tu solicitud.</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate enctype="multipart/form-data"> 
+                        {% csrf_token %}
+
+                        <div class="step-section">
+                            <h5 class="fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>Paso 1: Clasifica tu solicitud</h5>
+                            <p class="text-muted">Esto nos ayuda a asignar tu ticket al equipo correcto y con la prioridad adecuada.</p>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.titulo.id_for_label }}" class="form-label">Título del Ticket</label>
+                                        {% render_field form.titulo class="form-control" placeholder="Ej: Falla en la red Wi-Fi" %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.prioridad.id_for_label }}" class="form-label">Prioridad</label>
+                                        {% render_field form.prioridad class="form-select" %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.area_funcional.id_for_label }}" class="form-label">Área Solicitante</label>
+                                        {% render_field form.area_funcional class="form-select" %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.categoria.id_for_label }}" class="form-label">Categoría</label>
+                                        {% render_field form.categoria class="form-select" %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.tipo_ticket.id_for_label }}" class="form-label">Tipo de Ticket</label>
+                                        {% render_field form.tipo_ticket class="form-select" %}
+                                        <small class="form-text text-muted">Incidente: algo no funciona; Solicitud: necesitas algo nuevo.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="step-section">
+                            <h5 class="fw-bold text-primary"><i class="fas fa-file-alt me-2"></i>Paso 2: Describe el problema</h5>
+                            <p class="text-muted">Relata qué pasó, cómo te afecta y si ya probaste alguna solución. Mientras más contexto, mejor.</p>
+                            <div class="mb-3 mt-3">
+                                {% render_field form.descripcion class="form-control" rows="6" placeholder="Descripción completa del problema..." %}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="step-section">
+                            <h5 class="fw-bold text-primary"><i class="fas fa-paperclip me-2"></i>Paso 3: Adjuntar Archivo (Opcional)</h5>
+                            <div class="mb-3 mt-3">
+                                <label for="{{ form.adjunto.id_for_label }}" class="form-label">Sube una captura de pantalla, log o documento relevante.</label>
+                                {% render_field form.adjunto class="form-control" %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg me-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i> Enviar Ticket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

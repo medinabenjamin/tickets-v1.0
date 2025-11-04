@@ -1,0 +1,52 @@
+{% extends 'soporte/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Editar Rol de Usuario{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning">
+                <h4 class="mb-0">Editar Usuario: <strong>{{ usuario_a_editar.username }}</strong></h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <p class="text-muted">Aquí puedes asignar o revocar permisos de técnico y activar o desactivar la cuenta del usuario.</p>
+                    <hr class="mb-4">
+
+                    <div class="mb-4 form-check form-switch">
+                        {% render_field form.is_staff class="form-check-input" %}
+                        <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">
+                            <strong>Es Técnico (Rol Staff)</strong>
+                        </label>
+                        <small class="form-text text-muted d-block">Permite al usuario ver y gestionar todos los tickets del sistema.</small>
+                    </div>
+
+                    <div class="mb-4 form-check form-switch">
+                        {% render_field form.is_active class="form-check-input" %}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                            <strong>Cuenta Activa</strong>
+                        </label>
+                        <small class="form-text text-muted d-block">Desmarca esta opción para desactivar la cuenta temporalmente.</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.email.id_for_label }}" class="form-label"><strong>Email</strong></label>
+                        {% render_field form.email class="form-control" %}
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'mantenedor_usuarios' %}" class="btn btn-secondary me-2">Cancelar</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

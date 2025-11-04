@@ -1,0 +1,13 @@
+{% extends 'soporte/base.html' %}
+
+{% block title %}Editar Ticket{% endblock %}
+
+{% block content %}
+    <h1>Editar Ticket</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Actualizar</button>
+        <a href="{% url 'detalle_ticket' ticket.id %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+{% endblock %}

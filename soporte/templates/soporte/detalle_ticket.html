@@ -1,0 +1,161 @@
+{% extends 'soporte/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Detalle del Ticket #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h1 class="display-6 fw-bold mb-1">{{ ticket.titulo }}</h1>
+                            <p class="text-muted mb-0">Ticket #{{ ticket.id }}</p>
+                        </div>
+                        <div>
+                            {% if ticket.estado == 'cerrado' or ticket.estado == 'resuelto' %}
+                                <span class="badge rounded-pill bg-success fs-6">{{ ticket.get_estado_display }}</span>
+                            {% elif ticket.estado == 'progreso' %}
+                                <span class="badge rounded-pill bg-primary fs-6">{{ ticket.get_estado_display }}</span>
+                            {% else %}
+                                <span class="badge rounded-pill bg-warning text-dark fs-6">{{ ticket.get_estado_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="card-text">{{ ticket.descripcion|linebreaks }}</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-paperclip me-2"></i> Archivos Adjuntos</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for adjunto in ticket.adjuntos.all %}
+                            <li class="list-group-item">
+                                {% if adjunto.is_image %}
+                                    <div class="mb-2"><strong>{{ adjunto }}</strong> <a href="{{ adjunto.archivo.url }}" target="_blank" class="ms-2 small text-muted">(Ver completo)</a></div>
+                                    <img src="{{ adjunto.archivo.url }}" class="img-fluid rounded border" style="max-width: 250px;" alt="Adjunto">
+                                {% else %}
+                                    <a href="{{ adjunto.archivo.url }}" target="_blank" class="text-decoration-none"><i class="fas fa-file-alt me-2"></i> <strong>{{ adjunto }}</strong></a>
+                                {% endif %}
+                                <small class="text-muted d-block mt-2">Subido por: {{ adjunto.subido_por.username }} el {{ adjunto.fecha_subida|date:"d M Y" }}</small>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-muted">No hay archivos adjuntos en este ticket.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            {% if ticket.estado != 'cerrado' %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h5 class="mb-0"><i class="fas fa-reply me-2"></i> Agregar Comentario</h5></div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ comment_form.text.id_for_label }}" class="form-label fw-bold">Comentario:</label>
+                            {% render_field comment_form.text class="form-control" %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ comment_form.adjunto.id_for_label }}" class="form-label fw-bold">Adjuntar archivo (Opcional):</label>
+                            {% render_field comment_form.adjunto class="form-control" %}
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" name="comment_form_submit" class="btn btn-primary">Enviar Comentario</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i> Historial de Actividad (Más reciente primero)</h5>
+                </div>
+                <div class="card-body">
+                    {% for comment in comments %} <div class="d-flex mb-4">
+                            <div class="flex-shrink-0 me-3"><i class="fas fa-user-circle fa-2x text-muted"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="fw-bold mb-0">{{ comment.author.username }}</h6>
+                                    <small class="text-muted">{{ comment.created_at|date:"d M Y, H:i" }}</small>
+                                </div>
+                                <p class="mb-0">{{ comment.text|linebreaks }}</p>
+                                
+                                {% if comment.adjunto %}
+                                    <div class="mt-2 p-2 bg-light border rounded" style="max-width: 300px;">
+                                    {% if comment.is_image %}
+                                        <a href="{{ comment.adjunto.url }}" target="_blank">
+                                            <img src="{{ comment.adjunto.url }}" class="img-fluid rounded border" alt="Adjunto">
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ comment.adjunto.url }}" target="_blank" class="text-decoration-none">
+                                            <i class="fas fa-file-alt me-2"></i> {{ comment.adjunto.name|cut:"adjuntos_comentarios/" }}
+                                        </a>
+                                    {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No hay comentarios en este ticket aún.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div> <div class="col-lg-4">
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white"><h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Detalles del Ticket</h5></div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Solicitante:</strong> {{ ticket.solicitante.username }}</li>
+                    <li class="list-group-item"><strong>Técnico:</strong> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</li>
+                    <li class="list-group-item"><strong>Categoría:</strong> {{ ticket.get_categoria_display }}</li>
+                    <li class="list-group-item"><strong>Área:</strong> {{ ticket.get_area_funcional_display }}</li>
+                    <li class="list-group-item"><strong>Prioridad:</strong> {{ ticket.get_prioridad_display }}</li>
+                    <li class="list-group-item"><strong>Creado:</strong> {{ ticket.fecha_creacion|date:"d M Y, H:i" }}</li>
+                    {% if ticket.fecha_cierre %}
+                        <li class="list-group-item"><strong>Cerrado:</strong> {{ ticket.fecha_cierre|date:"d M Y, H:i" }}</li>
+                        <li class="list-group-item text-success"><strong>Resolución:</strong> {{ ticket.tiempo_resolucion }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            {% if request.user.is_staff and ticket.estado != 'cerrado' %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning"><h5 class="mb-0"><i class="fas fa-edit me-2"></i> Acciones de Técnico</h5></div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3"><label class="form-label fw-bold">Cambiar Estado</label>{% render_field tech_form.estado class="form-select" %}</div>
+                        <div class="mb-3"><label class="form-label fw-bold">Cambiar Prioridad</label>{% render_field tech_form.prioridad class="form-select" %}</div>
+                        <div class="d-grid"><button type="submit" name="tech_form_submit" class="btn btn-primary">Actualizar Ticket</button></div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Otras Acciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if request.user.is_staff and ticket.estado != 'cerrado' %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" name="cerrar_ticket_submit" class="btn btn-danger w-100"><i class="fas fa-lock me-2"></i> Cerrar Ticket</button>
+                        </form>
+                        {% endif %}
+                        <a href="{% url 'vista_previa_imprimir' ticket.id %}" class="btn btn-outline-secondary w-100"><i class="fas fa-print me-2"></i> Imprimir</a>
+                        <a href="{% url 'exportar_ticket_pdf' ticket.id %}" class="btn btn-outline-danger w-100"><i class="fas fa-file-pdf me-2"></i> Descargar PDF</a>
+                    </div>
+                </div>
+            </div>
+        </div> </div> </div> {% endblock %}
