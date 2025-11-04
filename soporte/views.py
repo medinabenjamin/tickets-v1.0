@@ -29,7 +29,6 @@ import logging
 
 # Importaciones para PDF
 from django.template.loader import get_template
-from weasyprint import HTML
 
 # Configura el logger para la aplicación
 logger = logging.getLogger(__name__)
@@ -139,6 +138,8 @@ def vista_previa_imprimir(request, ticket_id):
 
 @login_required
 def exportar_ticket_pdf(request, ticket_id):
+    from weasyprint import HTML
+
     ticket = _obtener_ticket_autorizado(request, ticket_id)
     if ticket is None:
         return redirect('home_tickets')

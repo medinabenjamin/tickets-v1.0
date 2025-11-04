@@ -40,8 +40,6 @@ INSTALLED_APPS = [
     'soporte',
     'reportes',
     'faq',
-    'django_q',
-    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
