@@ -8,8 +8,8 @@
     <div class="row justify-content-center">
         <div class="col-lg-8 col-xl-6">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Editar usuario: {{ usuario.username }}</h5>
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-dark"><i class="fas fa-user-edit me-2 text-dark"></i>Editar usuario: {{ usuario.username }}</h5>
                 </div>
                 <div class="card-body">
                     <form method="post" novalidate>
@@ -54,7 +54,7 @@
                         </div>
 
                         <hr class="my-4">
-                        <p class="fw-semibold mb-3">Seguridad</p>
+                        <p class="fw-semibold mb-3 text-dark">Seguridad</p>
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label }}</label>
@@ -76,7 +76,7 @@
                         </div>
 
                         <hr class="my-4">
-                        <p class="fw-semibold mb-3">Roles y estado</p>
+                        <p class="fw-semibold mb-3 text-dark">Roles y estado</p>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <div class="form-check form-switch">
@@ -87,7 +87,7 @@
                             <div class="col-md-4">
                                 <div class="form-check form-switch">
                                     {% render_field form.is_staff class="form-check-input" %}
-                                    <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">Staff</label>
+                                    <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">Miembro del personal</label>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -100,7 +100,7 @@
 
                         <div class="d-flex justify-content-end gap-2 mt-4">
                             <a href="{% url 'mantenedor_usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-dark">
                                 <i class="fas fa-save me-2"></i>Guardar cambios
                             </button>
                         </div>

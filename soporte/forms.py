@@ -56,6 +56,21 @@ class UserCreateForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser']
         field_classes = {'username': UsernameField}
+        labels = {
+            'username': 'Nombre de usuario',
+            'email': 'Correo electrónico',
+            'first_name': 'Nombre',
+            'last_name': 'Apellido',
+            'is_staff': 'Miembro del personal',
+            'is_active': 'Usuario activo',
+            'is_superuser': 'Superusuario',
+        }
+        help_texts = {
+            'username': 'Requerido. Máximo 150 caracteres. Solo letras, números y los símbolos @/./+/-/_.',
+            'is_staff': 'Permite que el usuario acceda a las herramientas internas del sistema.',
+            'is_active': 'Controla si el usuario puede iniciar sesión en la plataforma.',
+            'is_superuser': 'Otorga todos los permisos disponibles sin restricciones.',
+        }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -92,6 +107,15 @@ class UserUpdateForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser']
         field_classes = {'username': UsernameField}
+        labels = {
+            'username': 'Nombre de usuario',
+            'email': 'Correo electrónico',
+            'first_name': 'Nombre',
+            'last_name': 'Apellido',
+            'is_staff': 'Miembro del personal',
+            'is_active': 'Usuario activo',
+            'is_superuser': 'Superusuario',
+        }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -120,12 +144,14 @@ class UserPermissionForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
         required=False,
         label="Grupos",
+        help_text="Selecciona uno o más grupos para asignar permisos de manera conjunta.",
     )
     user_permissions = forms.ModelMultipleChoiceField(
         queryset=Permission.objects.select_related('content_type').order_by('content_type__app_label', 'codename'),
         widget=forms.CheckboxSelectMultiple,
         required=False,
         label="Permisos individuales",
+        help_text="Marca los permisos específicos que el usuario debe tener directamente.",
     )
 
     class Meta:
