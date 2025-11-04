@@ -119,6 +119,24 @@
                     <li class="list-group-item"><strong>Categoría:</strong> {{ ticket.get_categoria_display }}</li>
                     <li class="list-group-item"><strong>Área:</strong> {{ ticket.get_area_funcional_display }}</li>
                     <li class="list-group-item"><strong>Prioridad:</strong> {{ ticket.get_prioridad_display }}</li>
+                    <li class="list-group-item"><strong>Compromiso de respuesta:</strong>
+                        {% if ticket.fecha_compromiso_respuesta %}
+                            {{ ticket.fecha_compromiso_respuesta|date:"d M Y, H:i" }}
+                        {% else %}
+                            <span class="text-muted">No definido</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item"><strong>Estado SLA:</strong>
+                        {% if ticket.estado_sla == ticket.SLA_ESTADO_CUMPLIDO %}
+                            <span class="badge bg-success">{{ ticket.get_estado_sla_display }}</span>
+                        {% elif ticket.estado_sla == ticket.SLA_ESTADO_VENCIDO %}
+                            <span class="badge bg-danger">{{ ticket.get_estado_sla_display }}</span>
+                        {% elif ticket.estado_sla == ticket.SLA_ESTADO_PENDIENTE %}
+                            <span class="badge bg-warning text-dark">{{ ticket.get_estado_sla_display }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ ticket.get_estado_sla_display }}</span>
+                        {% endif %}
+                    </li>
                     <li class="list-group-item"><strong>Creado:</strong> {{ ticket.fecha_creacion|date:"d M Y, H:i" }}</li>
                     {% if ticket.fecha_cierre %}
                         <li class="list-group-item"><strong>Cerrado:</strong> {{ ticket.fecha_cierre|date:"d M Y, H:i" }}</li>
@@ -135,6 +153,8 @@
                         {% csrf_token %}
                         <div class="mb-3"><label class="form-label fw-bold">Cambiar Estado</label>{% render_field tech_form.estado class="form-select" %}</div>
                         <div class="mb-3"><label class="form-label fw-bold">Cambiar Prioridad</label>{% render_field tech_form.prioridad class="form-select" %}</div>
+                        <div class="mb-3"><label class="form-label fw-bold">Compromiso de respuesta</label>{% render_field tech_form.fecha_compromiso_respuesta class="form-control" %}</div>
+                        <div class="mb-3"><label class="form-label fw-bold">Estado del SLA</label>{% render_field tech_form.estado_sla class="form-select" %}</div>
                         <div class="d-grid"><button type="submit" name="tech_form_submit" class="btn btn-primary">Actualizar Ticket</button></div>
                     </form>
                 </div>
