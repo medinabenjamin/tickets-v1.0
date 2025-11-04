@@ -23,6 +23,7 @@ urlpatterns = [
     
     # Mantenedor de Usuarios y Roles
     path('mantenedor/usuarios/', views.mantenedor_usuarios, name='mantenedor_usuarios'),
-    path('mantenedor/usuarios/editar/<int:user_id>/', views.cambiar_rol_usuario, name='cambiar_rol_usuario'),
-    # La línea de 'crear_usuario' se ha eliminado
+    path('mantenedor/usuarios/<int:user_id>/editar/', views.editar_usuario, name='editar_usuario'),
+    path('mantenedor/usuarios/<int:user_id>/permisos/', views.gestionar_permisos_usuario, name='gestionar_permisos_usuario'),
+    path('mantenedor/usuarios/<int:user_id>/eliminar/', views.eliminar_usuario, name='eliminar_usuario'),
 ]
