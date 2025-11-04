@@ -33,6 +33,19 @@ def enviar_notificacion_correo(subject, message, recipient_list):
 
 def es_superusuario(user):
     return user.is_superuser
+
+
+def _obtener_ticket_autorizado(request, ticket_id):
+    """Devuelve el ticket si el usuario tiene permisos para verlo."""
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if not request.user.is_staff and ticket.solicitante != request.user:
+        return None
+    return ticket
+
+
+def _comentarios_ticket(ticket, orden='-created_at'):
+    """Retorna los comentarios de un ticket en el orden especificado."""
+    return Comment.objects.filter(ticket=ticket).order_by(orden)
     
 # --- VISTAS PRINCIPALES ---
 @login_required
@@ -72,10 +85,10 @@ def home(request):
 
 @login_required
 def detalle_ticket(request, ticket_id):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    if not request.user.is_staff and ticket.solicitante != request.user:
-        return redirect('home_tickets') 
-    comments = Comment.objects.filter(ticket=ticket).order_by('-created_at')
+    ticket = _obtener_ticket_autorizado(request, ticket_id)
+    if ticket is None:
+        return redirect('home_tickets')
+    comments = _comentarios_ticket(ticket)
     tech_form = TechTicketForm(instance=ticket)
     comment_form = CommentForm()
     if request.method == "POST":
@@ -106,19 +119,19 @@ def detalle_ticket(request, ticket_id):
 
 @login_required
 def vista_previa_imprimir(request, ticket_id):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    if not request.user.is_staff and ticket.solicitante != request.user:
+    ticket = _obtener_ticket_autorizado(request, ticket_id)
+    if ticket is None:
         return redirect('home_tickets')
-    comments = Comment.objects.filter(ticket=ticket).order_by('created_at')
+    comments = _comentarios_ticket(ticket, orden='created_at')
     context = {'ticket': ticket, 'comments': comments}
     return render(request, "soporte/imprimir_ticket.html", context)
 
 @login_required
 def exportar_ticket_pdf(request, ticket_id):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    if not request.user.is_staff and ticket.solicitante != request.user:
+    ticket = _obtener_ticket_autorizado(request, ticket_id)
+    if ticket is None:
         return redirect('home_tickets')
-    comments = Comment.objects.filter(ticket=ticket).order_by('created_at')
+    comments = _comentarios_ticket(ticket, orden='created_at')
     template = get_template("soporte/imprimir_ticket.html")
     context = {'ticket': ticket, 'comments': comments}
     html_string = template.render(context)
