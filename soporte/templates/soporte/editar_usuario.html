@@ -1,0 +1,113 @@
+{% extends 'soporte/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Editar usuario{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Editar usuario: {{ usuario.username }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">Usuario</label>
+                                {% render_field form.username class="form-control" %}
+                                {% for error in form.username.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">Nombre</label>
+                                {% render_field form.first_name class="form-control" %}
+                                {% for error in form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Apellido</label>
+                                {% render_field form.last_name class="form-control" %}
+                                {% for error in form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-12">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Correo electrónico</label>
+                                {% render_field form.email class="form-control" %}
+                                {% for error in form.email.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <p class="fw-semibold mb-3">Seguridad</p>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label }}</label>
+                                {% render_field form.password class="form-control" %}
+                                {% if form.password.help_text %}
+                                    <div class="form-text">{{ form.password.help_text }}</div>
+                                {% endif %}
+                                {% for error in form.password.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.password_confirm.id_for_label }}" class="form-label">{{ form.password_confirm.label }}</label>
+                                {% render_field form.password_confirm class="form-control" %}
+                                {% for error in form.password_confirm.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <p class="fw-semibold mb-3">Roles y estado</p>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    {% render_field form.is_active class="form-check-input" %}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Activo</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    {% render_field form.is_staff class="form-check-input" %}
+                                    <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">Staff</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    {% render_field form.is_superuser class="form-check-input" %}
+                                    <label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">Superusuario</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{% url 'mantenedor_usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Guardar cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

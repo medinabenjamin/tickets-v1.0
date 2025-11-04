@@ -1,30 +1,34 @@
-# soporte/forms.py
-
 from django import forms
-from django.contrib.auth.models import User
-from .models import Ticket, Comment, Adjunto # Importa todos los modelos necesarios
+from django.contrib.auth.forms import UsernameField
+from django.contrib.auth.models import Group, Permission, User
+
+from .models import Adjunto, Comment, Ticket
+
 
 class TicketForm(forms.ModelForm):
     adjunto = forms.FileField(required=False, label="Adjuntar archivo")
+
     class Meta:
         model = Ticket
-        fields = ['titulo', 'categoria', 'prioridad', 'tipo_ticket', 'area_funcional', 'descripcion'] 
+        fields = ['titulo', 'categoria', 'prioridad', 'tipo_ticket', 'area_funcional', 'descripcion']
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 6}),
         }
 
+
 class TechTicketForm(forms.ModelForm):
     """Formulario para que el técnico edite el estado y la prioridad del ticket."""
+
     class Meta:
         model = Ticket
         fields = ["estado", "prioridad"]
 
-# --- Formulario de Comentarios ACTUALIZADO ---
+
 class CommentForm(forms.ModelForm):
     """Formulario para agregar comentarios a un ticket."""
+
     class Meta:
         model = Comment
-        # Añadimos el nuevo campo de adjunto
         fields = ['text', 'adjunto']
         widgets = {
             'text': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Escribe tu respuesta o actualización aquí...'}),
@@ -35,33 +39,95 @@ class CommentForm(forms.ModelForm):
             'adjunto': 'Adjuntar archivo (Opcional):'
         }
 
-class UserRoleForm(forms.ModelForm):
-    """Formulario para que el Superusuario edite roles y estado de un usuario."""
-    class Meta:
-        model = User
-        fields = ['is_staff', 'is_active', 'email']
 
-# --- ¡FORMULARIO AÑADIDO PARA CREAR USUARIOS! ---
-class NewUserForm(forms.ModelForm):
-    """Formulario para que el Superusuario cree un nuevo usuario."""
+class UserCreateForm(forms.ModelForm):
+    """Formulario para crear un nuevo usuario con validación de contraseña."""
+
     password = forms.CharField(
-        widget=forms.PasswordInput, 
-        label="Contraseña"
+        widget=forms.PasswordInput,
+        label="Contraseña",
     )
     password_confirm = forms.CharField(
-        widget=forms.PasswordInput, 
-        label="Confirmar Contraseña"
+        widget=forms.PasswordInput,
+        label="Confirmar contraseña",
     )
 
     class Meta:
         model = User
-        # Campos que el admin puede definir al crear
-        fields = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active']
-    
-    def clean_password_confirm(self):
-        # Validación para asegurar que las contraseñas coincidan
-        pw = self.cleaned_data.get("password")
-        pw_conf = self.cleaned_data.get("password_confirm")
-        if pw and pw_conf and pw != pw_conf:
-            raise forms.ValidationError("Las contraseñas no coinciden.")
-        return pw_conf
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser']
+        field_classes = {'username': UsernameField}
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+        if password and password_confirm and password != password_confirm:
+            self.add_error('password_confirm', "Las contraseñas no coinciden.")
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+        return user
+
+
+class UserUpdateForm(forms.ModelForm):
+    """Formulario para editar un usuario y, opcionalmente, actualizar su contraseña."""
+
+    password = forms.CharField(
+        widget=forms.PasswordInput,
+        label="Nueva contraseña",
+        required=False,
+        help_text="Déjalo en blanco si no deseas cambiarla.",
+    )
+    password_confirm = forms.CharField(
+        widget=forms.PasswordInput,
+        label="Confirmar contraseña",
+        required=False,
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser']
+        field_classes = {'username': UsernameField}
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+        if password or password_confirm:
+            if password != password_confirm:
+                self.add_error('password_confirm', "Las contraseñas no coinciden.")
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        password = self.cleaned_data.get('password')
+        if password:
+            user.set_password(password)
+        if commit:
+            user.save()
+        return user
+
+
+class UserPermissionForm(forms.ModelForm):
+    """Formulario para asignar grupos y permisos específicos a un usuario."""
+
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all().order_by('name'),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Grupos",
+    )
+    user_permissions = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.select_related('content_type').order_by('content_type__app_label', 'codename'),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Permisos individuales",
+    )
+
+    class Meta:
+        model = User
+        fields = ['groups', 'user_permissions']

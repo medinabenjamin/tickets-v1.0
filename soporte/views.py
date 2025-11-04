@@ -11,9 +11,16 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 import csv
+from itertools import groupby
 from .models import Ticket, Comment, Adjunto
-# ¡IMPORTACIÓN ACTUALIZADA!
-from .forms import TicketForm, CommentForm, TechTicketForm, UserRoleForm, NewUserForm
+from .forms import (
+    TicketForm,
+    CommentForm,
+    TechTicketForm,
+    UserCreateForm,
+    UserPermissionForm,
+    UserUpdateForm,
+)
 import logging
 
 # Importaciones para PDF
@@ -196,48 +203,100 @@ def dashboard(request):
 @login_required
 @user_passes_test(es_superusuario)
 def mantenedor_usuarios(request):
-    """
-    Vista UNIFICADA: Muestra la lista de usuarios y maneja la creación de nuevos usuarios.
-    """
+    """Muestra el listado de usuarios y permite crear nuevos registros."""
+
     if request.method == 'POST':
-        # Lógica de CREACIÓN de usuario
-        form = NewUserForm(request.POST)
+        form = UserCreateForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.save()
-            messages.success(request, f'Usuario {user.username} creado exitosamente.')
+            usuario = form.save()
+            messages.success(request, f"Usuario {usuario.username} creado exitosamente.")
             return redirect('mantenedor_usuarios')
     else:
-        # Lógica de GET (formulario vacío)
-        form = NewUserForm()
+        form = UserCreateForm()
 
-    # Lógica de LISTADO (se ejecuta en GET y POST)
     usuarios = User.objects.all().order_by('username')
-    
     context = {
         'usuarios': usuarios,
-        'form': form, # Pasamos el formulario (vacío o con errores) a la plantilla
+        'form': form,
     }
     return render(request, 'soporte/mantenedor_usuarios.html', context)
 
+
 @login_required
 @user_passes_test(es_superusuario)
-def cambiar_rol_usuario(request, user_id):
-    """Vista de EDICIÓN de roles (sin cambios)"""
+def editar_usuario(request, user_id):
     usuario = get_object_or_404(User, id=user_id)
     if request.method == 'POST':
-        form = UserRoleForm(request.POST, instance=usuario)
+        form = UserUpdateForm(request.POST, instance=usuario)
         if form.is_valid():
-            form.save()
-            messages.success(request, f'Roles del usuario {usuario.username} actualizados.')
+            usuario_actualizado = form.save()
+            if usuario_actualizado == request.user:
+                update_session_auth_hash(request, usuario_actualizado)
+            messages.success(request, f"Usuario {usuario_actualizado.username} actualizado correctamente.")
             return redirect('mantenedor_usuarios')
     else:
-        form = UserRoleForm(instance=usuario)
-    context = {'form': form, 'usuario_a_editar': usuario}
-    return render(request, 'soporte/cambiar_rol_usuario.html', context)
+        form = UserUpdateForm(instance=usuario)
 
-# --- (VISTA 'crear_usuario' ELIMINADA, AHORA SE MANEJA EN 'mantenedor_usuarios') ---
+    context = {
+        'form': form,
+        'usuario': usuario,
+    }
+    return render(request, 'soporte/editar_usuario.html', context)
+
+
+@login_required
+@user_passes_test(es_superusuario)
+def eliminar_usuario(request, user_id):
+    usuario = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        if usuario == request.user:
+            messages.error(request, 'No puedes eliminar tu propia cuenta mientras estás autenticado.')
+            return redirect('mantenedor_usuarios')
+        username = usuario.username
+        usuario.delete()
+        messages.success(request, f'Usuario {username} eliminado correctamente.')
+        return redirect('mantenedor_usuarios')
+
+    context = {'usuario': usuario}
+    return render(request, 'soporte/confirmar_eliminar_usuario.html', context)
+
+
+@login_required
+@user_passes_test(es_superusuario)
+def gestionar_permisos_usuario(request, user_id):
+    usuario = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        form = UserPermissionForm(request.POST, instance=usuario)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Permisos de {usuario.username} actualizados correctamente.')
+            return redirect('mantenedor_usuarios')
+    else:
+        form = UserPermissionForm(instance=usuario)
+
+    selected_permissions = set(form['user_permissions'].value() or [])
+    permisos_por_app = []
+    queryset = form.fields['user_permissions'].queryset
+    for app_label, permisos in groupby(queryset, key=lambda p: p.content_type.app_label):
+        permisos_por_app.append({
+            'app_label': app_label,
+            'permisos': [
+                {
+                    'id': permiso.id,
+                    'nombre': permiso.name,
+                    'codename': permiso.codename,
+                    'checked': str(permiso.id) in selected_permissions,
+                }
+                for permiso in permisos
+            ],
+        })
+
+    context = {
+        'form': form,
+        'usuario': usuario,
+        'permisos_por_app': permisos_por_app,
+    }
+    return render(request, 'soporte/gestionar_permisos_usuario.html', context)
 
 # --- VISTAS DE EXPORTACIÓN ---
 @login_required
