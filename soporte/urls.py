@@ -24,6 +24,5 @@ urlpatterns = [
     # Mantenedor de Usuarios y Roles
     path('mantenedor/usuarios/', views.mantenedor_usuarios, name='mantenedor_usuarios'),
     path('mantenedor/usuarios/<int:user_id>/editar/', views.editar_usuario, name='editar_usuario'),
-    path('mantenedor/usuarios/<int:user_id>/permisos/', views.gestionar_permisos_usuario, name='gestionar_permisos_usuario'),
     path('mantenedor/usuarios/<int:user_id>/eliminar/', views.eliminar_usuario, name='eliminar_usuario'),
 ]

@@ -1,8 +1,13 @@
 from django import forms
 from django.contrib.auth.forms import UsernameField
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import User
 
 from .models import Adjunto, Comment, Ticket
+from .roles import (
+    ROLE_CHOICES,
+    assign_role_to_user,
+    get_user_role,
+)
 
 
 class TicketForm(forms.ModelForm):
@@ -51,25 +56,27 @@ class UserCreateForm(forms.ModelForm):
         widget=forms.PasswordInput,
         label="Confirmar contraseña",
     )
+    role = forms.ChoiceField(
+        choices=ROLE_CHOICES,
+        label="Rol del usuario",
+        initial="solicitante",
+        help_text="Define los permisos que el usuario heredará automáticamente.",
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser']
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_active']
         field_classes = {'username': UsernameField}
         labels = {
             'username': 'Nombre de usuario',
             'email': 'Correo electrónico',
             'first_name': 'Nombre',
             'last_name': 'Apellido',
-            'is_staff': 'Miembro del personal',
             'is_active': 'Usuario activo',
-            'is_superuser': 'Superusuario',
         }
         help_texts = {
             'username': 'Requerido. Máximo 150 caracteres. Solo letras, números y los símbolos @/./+/-/_.',
-            'is_staff': 'Permite que el usuario acceda a las herramientas internas del sistema.',
             'is_active': 'Controla si el usuario puede iniciar sesión en la plataforma.',
-            'is_superuser': 'Otorga todos los permisos disponibles sin restricciones.',
         }
 
     def clean(self):
@@ -85,6 +92,7 @@ class UserCreateForm(forms.ModelForm):
         user.set_password(self.cleaned_data['password'])
         if commit:
             user.save()
+            assign_role_to_user(user, self.cleaned_data['role'])
         return user
 
 
@@ -102,20 +110,28 @@ class UserUpdateForm(forms.ModelForm):
         label="Confirmar contraseña",
         required=False,
     )
+    role = forms.ChoiceField(
+        choices=ROLE_CHOICES,
+        label="Rol del usuario",
+        help_text="Actualiza los permisos heredados asignando un rol diferente.",
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser']
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_active']
         field_classes = {'username': UsernameField}
         labels = {
             'username': 'Nombre de usuario',
             'email': 'Correo electrónico',
             'first_name': 'Nombre',
             'last_name': 'Apellido',
-            'is_staff': 'Miembro del personal',
             'is_active': 'Usuario activo',
-            'is_superuser': 'Superusuario',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['role'].initial = get_user_role(self.instance)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -133,27 +149,5 @@ class UserUpdateForm(forms.ModelForm):
             user.set_password(password)
         if commit:
             user.save()
+            assign_role_to_user(user, self.cleaned_data['role'])
         return user
-
-
-class UserPermissionForm(forms.ModelForm):
-    """Formulario para asignar grupos y permisos específicos a un usuario."""
-
-    groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all().order_by('name'),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label="Grupos",
-        help_text="Selecciona uno o más grupos para asignar permisos de manera conjunta.",
-    )
-    user_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.select_related('content_type').order_by('content_type__app_label', 'codename'),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label="Permisos individuales",
-        help_text="Marca los permisos específicos que el usuario debe tener directamente.",
-    )
-
-    class Meta:
-        model = User
-        fields = ['groups', 'user_permissions']
