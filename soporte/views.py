@@ -11,15 +11,19 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 import csv
-from itertools import groupby
 from .models import Ticket, Comment, Adjunto
 from .forms import (
     TicketForm,
     CommentForm,
     TechTicketForm,
     UserCreateForm,
-    UserPermissionForm,
     UserUpdateForm,
+)
+from .roles import (
+    ROLE_DEFINITIONS,
+    get_role_badge_class,
+    get_role_label,
+    get_user_role,
 )
 import logging
 
@@ -214,10 +218,17 @@ def mantenedor_usuarios(request):
     else:
         form = UserCreateForm()
 
-    usuarios = User.objects.all().order_by('username')
+    usuarios_qs = User.objects.all().order_by('username').prefetch_related('groups')
+    usuarios = list(usuarios_qs)
+    for usuario in usuarios:
+        role_key = get_user_role(usuario)
+        usuario.role_key = role_key
+        usuario.role_label = get_role_label(role_key)
+        usuario.role_badge = get_role_badge_class(role_key)
     context = {
         'usuarios': usuarios,
         'form': form,
+        'role_definitions': ROLE_DEFINITIONS,
     }
     return render(request, 'soporte/mantenedor_usuarios.html', context)
 
@@ -260,43 +271,6 @@ def eliminar_usuario(request, user_id):
     context = {'usuario': usuario}
     return render(request, 'soporte/confirmar_eliminar_usuario.html', context)
 
-
-@login_required
-@user_passes_test(es_superusuario)
-def gestionar_permisos_usuario(request, user_id):
-    usuario = get_object_or_404(User, id=user_id)
-    if request.method == 'POST':
-        form = UserPermissionForm(request.POST, instance=usuario)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'Permisos de {usuario.username} actualizados correctamente.')
-            return redirect('mantenedor_usuarios')
-    else:
-        form = UserPermissionForm(instance=usuario)
-
-    selected_permissions = set(form['user_permissions'].value() or [])
-    permisos_por_app = []
-    queryset = form.fields['user_permissions'].queryset
-    for app_label, permisos in groupby(queryset, key=lambda p: p.content_type.app_label):
-        permisos_por_app.append({
-            'app_label': app_label,
-            'permisos': [
-                {
-                    'id': permiso.id,
-                    'nombre': permiso.name,
-                    'codename': permiso.codename,
-                    'checked': str(permiso.id) in selected_permissions,
-                }
-                for permiso in permisos
-            ],
-        })
-
-    context = {
-        'form': form,
-        'usuario': usuario,
-        'permisos_por_app': permisos_por_app,
-    }
-    return render(request, 'soporte/gestionar_permisos_usuario.html', context)
 
 # --- VISTAS DE EXPORTACIÓN ---
 @login_required
