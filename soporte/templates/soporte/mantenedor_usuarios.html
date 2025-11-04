@@ -7,17 +7,17 @@
 <div class="container-fluid mt-4">
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4 gap-2">
         <div>
-            <h1 class="display-6 fw-bold mb-0">Mantenedor de Usuarios</h1>
+            <h1 class="display-6 fw-bold mb-0 text-dark">Mantenedor de Usuarios</h1>
             <p class="text-muted mb-0">Administra el ciclo de vida completo de los usuarios del sistema.</p>
         </div>
-        <span class="badge bg-primary fs-6 align-self-start align-self-lg-center">{{ usuarios.count }} usuarios registrados</span>
+        <span class="badge bg-dark text-white fs-6 align-self-start align-self-lg-center">{{ usuarios.count }} usuarios registrados</span>
     </div>
 
     <div class="row g-4">
         <div class="col-12 col-lg-4">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Crear nuevo usuario</h5>
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-dark"><i class="fas fa-user-plus me-2 text-dark"></i>Crear nuevo usuario</h5>
                 </div>
                 <div class="card-body">
                     <form method="post" novalidate>
@@ -52,7 +52,7 @@
                             {% endif %}
                         {% endfor %}
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-dark">
                                 <i class="fas fa-save me-1"></i> Guardar usuario
                             </button>
                         </div>
@@ -63,9 +63,9 @@
 
         <div class="col-12 col-lg-8">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Usuarios registrados</h5>
-                    <span class="badge bg-light text-dark">{{ usuarios.count }} en total</span>
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-dark"><i class="fas fa-users me-2 text-dark"></i>Usuarios registrados</h5>
+                    <span class="badge bg-dark text-white">{{ usuarios.count }} en total</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -99,7 +99,7 @@
                                         {% if user.is_superuser %}
                                             <span class="badge bg-dark">Superusuario</span>
                                         {% elif user.is_staff %}
-                                            <span class="badge bg-primary">Staff</span>
+                                            <span class="badge bg-secondary">Personal</span>
                                         {% else %}
                                             <span class="badge bg-secondary">Usuario</span>
                                         {% endif %}
@@ -115,10 +115,10 @@
                                             <a href="{% url 'editar_usuario' user.id %}" class="btn btn-sm btn-outline-primary" title="Editar usuario">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="{% url 'gestionar_permisos_usuario' user.id %}" class="btn btn-sm btn-outline-secondary" title="Permisos">
+                                            <a href="{% url 'gestionar_permisos_usuario' user.id %}" class="btn btn-sm btn-outline-secondary" title="Gestionar permisos">
                                                 <i class="fas fa-user-shield"></i>
                                             </a>
-                                            <a href="{% url 'eliminar_usuario' user.id %}" class="btn btn-sm btn-outline-danger{% if user == request.user %} disabled{% endif %}" title="Eliminar"{% if user == request.user %} tabindex="-1" aria-disabled="true"{% endif %}>
+                                            <a href="{% url 'eliminar_usuario' user.id %}" class="btn btn-sm btn-outline-danger{% if user == request.user %} disabled{% endif %}" title="Eliminar usuario"{% if user == request.user %} tabindex="-1" aria-disabled="true"{% endif %}>
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                         </div>

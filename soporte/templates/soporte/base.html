@@ -78,7 +78,7 @@
                 
                 {% if request.user.is_staff %}
                 <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action bg-dark text-white">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                    <i class="fas fa-tachometer-alt"></i> Panel de control
                 </a>
                 {% endif %}
                 
@@ -88,7 +88,7 @@
                 
                 {% if request.user.is_superuser %}
                     <a href="{% url 'dashboard_reportes' %}" class="list-group-item list-group-item-action bg-dark text-white">
-                        <i class="fas fa-chart-line"></i> Dashboard de Reportes
+                        <i class="fas fa-chart-line"></i> Panel de reportes
                     </a>
                     <a href="{% url 'mantenedor_usuarios' %}" class="list-group-item list-group-item-action bg-dark text-white">
                         <i class="fas fa-users-cog"></i> Mantenedor de Usuarios
@@ -113,7 +113,7 @@
         <div id="page-content-wrapper">
             <nav class="navbar navbar-expand-lg navbar-light navbar-top border-bottom">
                 <div class="container-fluid">
-                    <button class="btn btn-primary d-md-none" id="sidebarToggle">Toggle Menu</button>
+                    <button class="btn btn-dark d-md-none" id="sidebarToggle">Mostrar menú</button>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
                             <li class="nav-item active">
