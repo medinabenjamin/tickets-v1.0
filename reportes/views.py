@@ -33,7 +33,9 @@ def dashboard_reportes(request):
     ).order_by('avg_time')
 
     # 3. Tickets por Categoría
-    tickets_por_categoria = Ticket.objects.values('categoria').annotate(count=Count('categoria')).order_by('-count')
+    tickets_por_categoria = list(
+        Ticket.objects.values('categoria').annotate(count=Count('categoria')).order_by('-count')
+    )
     
     # 4. Distribución de Estados (Preparado para el gráfico)
     tickets_por_estado_query = Ticket.objects.values('estado').annotate(count=Count('estado')).order_by('estado')
@@ -42,11 +44,19 @@ def dashboard_reportes(request):
     estados_labels = [item['estado'].capitalize() for item in tickets_por_estado_query]
     estados_data = [item['count'] for item in tickets_por_estado_query]
 
+    total_tickets = Ticket.objects.count()
+
+    for item in tickets_por_categoria:
+        if total_tickets:
+            item['percentage'] = (item['count'] / total_tickets) * 100
+        else:
+            item['percentage'] = 0
+
     context = {
         'avg_resolution_time_global': avg_resolution_time_global,
         'resolution_by_tech': resolution_by_tech,
         'tickets_por_categoria': tickets_por_categoria,
-        'total_tickets': Ticket.objects.count(),
+        'total_tickets': total_tickets,
         'estados_chart_data': {
             'labels': estados_labels,
             'data': estados_data,
