@@ -43,8 +43,8 @@
                             <label for="id_prioridad" class="form-label text-white-50">Prioridad</label>
                             <select name="prioridad" id="id_prioridad" class="form-select">
                                 <option value="">Todas</option>
-                                {% for value, label in prioridades %}
-                                    <option value="{{ value }}" {% if selected_prioridad == value %}selected{% endif %}>{{ label }}</option>
+                                {% for prioridad in prioridades %}
+                                    <option value="{{ prioridad.clave }}" {% if selected_prioridad == prioridad.clave %}selected{% endif %}>{{ prioridad.nombre }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -89,15 +89,19 @@
                                 <a href="{% url 'detalle_ticket' ticket.id %}"><strong>{{ ticket.titulo }}</strong></a>
                             </td>
                             <td class="text-center">
-                                {% if ticket.prioridad == 'critica' %}
-                                    <span class="badge rounded-pill bg-danger">Crítica</span>
-                                {% elif ticket.prioridad == 'alta' %}
-                                    <span class="badge rounded-pill bg-warning text-dark">Alta</span>
-                                {% elif ticket.prioridad == 'media' %}
-                                    <span class="badge rounded-pill bg-info text-dark">Media</span>
-                                {% else %}
-                                    <span class="badge rounded-pill bg-secondary">Baja</span>
-                                {% endif %}
+                                {% with clave=ticket.prioridad.clave %}
+                                    {% if clave == 'critica' %}
+                                        <span class="badge rounded-pill bg-danger">{{ ticket.prioridad.nombre }}</span>
+                                    {% elif clave == 'alta' %}
+                                        <span class="badge rounded-pill bg-warning text-dark">{{ ticket.prioridad.nombre }}</span>
+                                    {% elif clave == 'media' %}
+                                        <span class="badge rounded-pill bg-info text-dark">{{ ticket.prioridad.nombre }}</span>
+                                    {% elif clave == 'baja' %}
+                                        <span class="badge rounded-pill bg-secondary">{{ ticket.prioridad.nombre }}</span>
+                                    {% else %}
+                                        <span class="badge rounded-pill bg-primary">{{ ticket.prioridad.nombre }}</span>
+                                    {% endif %}
+                                {% endwith %}
                             </td>
                             <td class="text-center">
                                 {% if ticket.estado == 'cerrado' or ticket.estado == 'resuelto' %}

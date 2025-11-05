@@ -118,7 +118,8 @@
                     <li class="list-group-item"><strong>Técnico:</strong> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</li>
                     <li class="list-group-item"><strong>Categoría:</strong> {{ ticket.get_categoria_display }}</li>
                     <li class="list-group-item"><strong>Área:</strong> {{ ticket.get_area_funcional_display }}</li>
-                    <li class="list-group-item"><strong>Prioridad:</strong> {{ ticket.get_prioridad_display }}</li>
+                    <li class="list-group-item"><strong>Prioridad:</strong> {{ ticket.prioridad.nombre }}</li>
+                    <li class="list-group-item"><strong>Tiempo objetivo de resolución:</strong> {{ ticket.prioridad.minutos_resolucion }} minutos</li>
                     <li class="list-group-item"><strong>Compromiso de respuesta:</strong>
                         {% if ticket.fecha_compromiso_respuesta %}
                             {{ ticket.fecha_compromiso_respuesta|date:"d M Y, H:i" }}

@@ -7,6 +7,38 @@ from django.db import models
 from django.utils import timezone
 
 
+class Prioridad(models.Model):
+    """Nivel de prioridad disponible para los tickets."""
+
+    clave = models.SlugField(
+        max_length=50,
+        unique=True,
+        verbose_name="Identificador",
+        help_text=(
+            "Nombre corto sin espacios usado internamente para referirse a la prioridad. "
+            "Por ejemplo: 'baja', 'media', 'alta'."
+        ),
+    )
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre")
+    minutos_resolucion = models.PositiveIntegerField(
+        verbose_name="Tiempo objetivo (minutos)",
+        help_text="Tiempo máximo estimado para resolver un ticket con esta prioridad.",
+    )
+    orden = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Orden",
+        help_text="Se utiliza para ordenar las prioridades en los listados.",
+    )
+
+    class Meta:
+        ordering = ["orden", "nombre"]
+        verbose_name = "Prioridad de SLA"
+        verbose_name_plural = "Prioridades de SLA"
+
+    def __str__(self):
+        return self.nombre
+
+
 class Ticket(models.Model):
     """Ticket de soporte con información de SLA."""
 
@@ -30,13 +62,6 @@ class Ticket(models.Model):
     TIPO_CHOICES = [
         ('incidencia', 'Incidencia'),
         ('solicitud', 'Solicitud'),
-    ]
-
-    PRIORIDAD_CHOICES = [
-        ('baja', 'Baja'),
-        ('media', 'Media'),
-        ('alta', 'Alta'),
-        ('critica', 'Crítica'),
     ]
 
     ESTADO_CHOICES = [
@@ -70,7 +95,12 @@ class Ticket(models.Model):
     )
 
     categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES, default='soporte')
-    prioridad = models.CharField(max_length=20, choices=PRIORIDAD_CHOICES, default='baja')
+    prioridad = models.ForeignKey(
+        Prioridad,
+        on_delete=models.PROTECT,
+        related_name="tickets",
+        verbose_name="Prioridad",
+    )
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='abierto')
     tipo_ticket = models.CharField(
         max_length=20,
@@ -116,7 +146,7 @@ class Ticket(models.Model):
 
         super().save(*args, **kwargs)
 
-        regla, fecha_compromiso, estado_sla = self._calcular_datos_sla()
+        regla, minutos_objetivo, fecha_compromiso, estado_sla = self._calcular_datos_sla()
         needs_update = False
         if self.fecha_compromiso_respuesta != fecha_compromiso:
             self.fecha_compromiso_respuesta = fecha_compromiso
@@ -132,7 +162,7 @@ class Ticket(models.Model):
             ticket=self,
             defaults={
                 'regla': regla,
-                'minutos_objetivo': regla.minutos_objetivo if regla else None,
+                'minutos_objetivo': minutos_objetivo,
                 'fecha_compromiso': fecha_compromiso,
                 'estado': estado_sla,
             },
@@ -143,12 +173,19 @@ class Ticket(models.Model):
 
     def _calcular_datos_sla(self):
         regla = self._obtener_regla_sla()
-        if not regla:
-            return None, None, self.SLA_ESTADO_SIN_REGLA
+        if regla:
+            minutos_objetivo = regla.minutos_objetivo
+        elif self.prioridad:
+            minutos_objetivo = self.prioridad.minutos_resolucion
+        else:
+            minutos_objetivo = None
+
+        if not minutos_objetivo:
+            return None, None, None, self.SLA_ESTADO_SIN_REGLA
         base_datetime = self.fecha_creacion or timezone.now()
-        fecha_compromiso = base_datetime + timedelta(minutes=regla.minutos_objetivo)
+        fecha_compromiso = base_datetime + timedelta(minutes=minutos_objetivo)
         estado_sla = self._determinar_estado_sla(fecha_compromiso)
-        return regla, fecha_compromiso, estado_sla
+        return regla, minutos_objetivo, fecha_compromiso, estado_sla
 
     def _obtener_regla_sla(self):
         if not self.prioridad or not self.tipo_ticket:
@@ -174,7 +211,12 @@ class Ticket(models.Model):
 class SLARegla(models.Model):
     """Regla que define el tiempo objetivo de respuesta para un SLA."""
 
-    prioridad = models.CharField(max_length=20, choices=Ticket.PRIORIDAD_CHOICES)
+    prioridad = models.ForeignKey(
+        Prioridad,
+        on_delete=models.CASCADE,
+        related_name="reglas",
+        verbose_name="Prioridad",
+    )
     tipo_ticket = models.CharField(max_length=20, choices=Ticket.TIPO_CHOICES)
     minutos_objetivo = models.PositiveIntegerField()
 
@@ -184,7 +226,7 @@ class SLARegla(models.Model):
         verbose_name_plural = "Reglas de SLA"
 
     def __str__(self):
-        return f"{self.get_prioridad_display()} - {self.get_tipo_ticket_display()} ({self.minutos_objetivo} min)"
+        return f"{self.prioridad.nombre} - {self.get_tipo_ticket_display()} ({self.minutos_objetivo} min)"
 
 
 class SLACalculo(models.Model):

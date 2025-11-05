@@ -25,4 +25,10 @@ urlpatterns = [
     path('mantenedor/usuarios/', views.mantenedor_usuarios, name='mantenedor_usuarios'),
     path('mantenedor/usuarios/<int:user_id>/editar/', views.editar_usuario, name='editar_usuario'),
     path('mantenedor/usuarios/<int:user_id>/eliminar/', views.eliminar_usuario, name='eliminar_usuario'),
+
+    # Gestión SLA - Prioridades
+    path('sla/prioridades/', views.lista_prioridades_sla, name='sla_prioridades'),
+    path('sla/prioridades/nueva/', views.crear_prioridad_sla, name='sla_prioridad_crear'),
+    path('sla/prioridades/<int:prioridad_id>/editar/', views.editar_prioridad_sla, name='sla_prioridad_editar'),
+    path('sla/prioridades/<int:prioridad_id>/eliminar/', views.eliminar_prioridad_sla, name='sla_prioridad_eliminar'),
 ]
