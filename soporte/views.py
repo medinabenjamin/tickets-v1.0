@@ -5,19 +5,20 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages # <--- IMPORTACIÓN AÑADIDA
-from django.db.models import Count, Q, Avg
+from django.db.models import Count, Max, ProtectedError, Q
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 import csv
-from .models import Ticket, Comment, Adjunto
+from .models import Ticket, Comment, Adjunto, Prioridad
 from .forms import (
     TicketForm,
     CommentForm,
     TechTicketForm,
     UserCreateForm,
     UserUpdateForm,
+    PrioridadForm,
 )
 from .roles import (
     ROLE_DEFINITIONS,
@@ -43,6 +44,10 @@ def enviar_notificacion_correo(subject, message, recipient_list):
 
 def es_superusuario(user):
     return user.is_superuser
+
+
+def es_personal_sla(user):
+    return user.is_staff
 
 
 def _obtener_ticket_autorizado(request, ticket_id):
@@ -78,16 +83,18 @@ def home(request):
         tickets_list = tickets_list.filter(estado=estado_filter)
     prioridad_filter = request.GET.get('prioridad')
     if prioridad_filter:
-        tickets_list = tickets_list.filter(prioridad=prioridad_filter)
+        tickets_list = tickets_list.filter(prioridad__clave=prioridad_filter)
     tecnico_filter = request.GET.get('tecnico')
     if request.user.is_staff and tecnico_filter:
         tickets_list = tickets_list.filter(tecnico_asignado__username=tecnico_filter)
     search_query = request.GET.get('q')
     if search_query:
         tickets_list = tickets_list.filter(Q(titulo__icontains=search_query) | Q(descripcion__icontains=search_query))
-    tickets = tickets_list.order_by('-fecha_creacion')
+    tickets = tickets_list.select_related('prioridad', 'solicitante', 'tecnico_asignado').order_by('-fecha_creacion')
     context = {
-        "tickets": tickets, "estados": Ticket.ESTADO_CHOICES, "prioridades": Ticket.PRIORIDAD_CHOICES,
+        "tickets": tickets,
+        "estados": Ticket.ESTADO_CHOICES,
+        "prioridades": Prioridad.objects.order_by("orden", "nombre"),
         "tecnicos": User.objects.filter(is_staff=True), "selected_estado": estado_filter,
         "selected_prioridad": prioridad_filter, "selected_tecnico": tecnico_filter, "search_query": search_query,
     }
@@ -192,9 +199,25 @@ def dashboard(request):
     tickets_abiertos = Ticket.objects.filter(estado='abierto').count()
     tickets_en_progreso = Ticket.objects.filter(estado='progreso').count()
     tickets_cerrados = Ticket.objects.filter(estado__in=['resuelto', 'cerrado']).count()
-    tickets_recientes = Ticket.objects.all().order_by('-fecha_creacion')[:5]
+    tickets_recientes = (
+        Ticket.objects.select_related('prioridad', 'solicitante')
+        .all()
+        .order_by('-fecha_creacion')[:5]
+    )
     tickets_por_estado = list(Ticket.objects.values('estado').annotate(total=Count('estado')))
-    tickets_por_prioridad = list(Ticket.objects.values('prioridad').annotate(total=Count('prioridad')))
+    tickets_por_prioridad_qs = (
+        Ticket.objects.values('prioridad__nombre', 'prioridad__clave')
+        .annotate(total=Count('prioridad'))
+        .order_by('prioridad__orden', 'prioridad__nombre')
+    )
+    tickets_por_prioridad = [
+        {
+            'nombre': entry['prioridad__nombre'],
+            'clave': entry['prioridad__clave'],
+            'total': entry['total'],
+        }
+        for entry in tickets_por_prioridad_qs
+    ]
     context = {
         'total_tickets': total_tickets, 'tickets_abiertos': tickets_abiertos,
         'tickets_en_progreso': tickets_en_progreso, 'tickets_cerrados': tickets_cerrados,
@@ -202,6 +225,100 @@ def dashboard(request):
         'tickets_por_prioridad': tickets_por_prioridad,
     }
     return render(request, 'soporte/dashboard.html', context)
+
+
+# --- GESTIÓN DE SLA ---
+
+
+@login_required
+@user_passes_test(es_personal_sla)
+def lista_prioridades_sla(request):
+    prioridades = Prioridad.objects.order_by("orden", "nombre")
+    return render(
+        request,
+        'soporte/sla_prioridad_list.html',
+        {
+            'prioridades': prioridades,
+        },
+    )
+
+
+@login_required
+@user_passes_test(es_personal_sla)
+def crear_prioridad_sla(request):
+    if request.method == 'POST':
+        form = PrioridadForm(request.POST)
+        if form.is_valid():
+            prioridad = form.save()
+            messages.success(
+                request,
+                f"Prioridad '{prioridad.nombre}' creada correctamente.",
+            )
+            return redirect('sla_prioridades')
+    else:
+        next_order = (
+            Prioridad.objects.aggregate(max_orden=Max('orden')).get('max_orden') or 0
+        )
+        form = PrioridadForm(initial={'orden': next_order + 1})
+    return render(
+        request,
+        'soporte/sla_prioridad_form.html',
+        {
+            'form': form,
+            'titulo': 'Crear prioridad',
+        },
+    )
+
+
+@login_required
+@user_passes_test(es_personal_sla)
+def editar_prioridad_sla(request, prioridad_id):
+    prioridad = get_object_or_404(Prioridad, id=prioridad_id)
+    if request.method == 'POST':
+        form = PrioridadForm(request.POST, instance=prioridad)
+        if form.is_valid():
+            prioridad_actualizada = form.save()
+            messages.success(
+                request,
+                f"Prioridad '{prioridad_actualizada.nombre}' actualizada correctamente.",
+            )
+            return redirect('sla_prioridades')
+    else:
+        form = PrioridadForm(instance=prioridad)
+    return render(
+        request,
+        'soporte/sla_prioridad_form.html',
+        {
+            'form': form,
+            'prioridad': prioridad,
+            'titulo': 'Editar prioridad',
+        },
+    )
+
+
+@login_required
+@user_passes_test(es_personal_sla)
+def eliminar_prioridad_sla(request, prioridad_id):
+    prioridad = get_object_or_404(Prioridad, id=prioridad_id)
+    if request.method == 'POST':
+        nombre = prioridad.nombre
+        try:
+            prioridad.delete()
+        except ProtectedError:
+            messages.error(
+                request,
+                "No es posible eliminar la prioridad porque existen tickets asociados.",
+            )
+        else:
+            messages.success(request, f"Prioridad '{nombre}' eliminada correctamente.")
+        return redirect('sla_prioridades')
+    return render(
+        request,
+        'soporte/sla_prioridad_confirm_delete.html',
+        {
+            'prioridad': prioridad,
+        },
+    )
 
 # --- VISTAS DE MANTENEDOR (¡ACTUALIZADAS!) ---
 
@@ -287,7 +404,7 @@ def exportar_tickets_csv(request):
         writer.writerow([
             ticket.id, ticket.titulo, ticket.descripcion, ticket.solicitante.username,
             ticket.tecnico_asignado.username if ticket.tecnico_asignado else '-',
-            ticket.get_estado_display(), ticket.get_prioridad_display(),
+            ticket.get_estado_display(), ticket.prioridad.nombre,
             ticket.get_categoria_display(), ticket.get_tipo_ticket_display(),
             ticket.get_area_funcional_display(),
             ticket.fecha_creacion.strftime('%Y-%m-%d %H:%M'),

@@ -129,7 +129,19 @@
                             <td>#{{ ticket.id }}</td>
                             <td><a href="{% url 'detalle_ticket' ticket.id %}"><strong>{{ ticket.titulo }}</strong></a></td>
                             <td class="text-center">
-                                {% if ticket.prioridad == 'critica' %}<span class="badge rounded-pill bg-danger">Crítica</span>{% elif ticket.prioridad == 'alta' %}<span class="badge rounded-pill bg-warning text-dark">Alta</span>{% else %}<span class="badge rounded-pill bg-info text-dark">Media/Baja</span>{% endif %}
+                                {% with clave=ticket.prioridad.clave %}
+                                    {% if clave == 'critica' %}
+                                        <span class="badge rounded-pill bg-danger">{{ ticket.prioridad.nombre }}</span>
+                                    {% elif clave == 'alta' %}
+                                        <span class="badge rounded-pill bg-warning text-dark">{{ ticket.prioridad.nombre }}</span>
+                                    {% elif clave == 'media' %}
+                                        <span class="badge rounded-pill bg-info text-dark">{{ ticket.prioridad.nombre }}</span>
+                                    {% elif clave == 'baja' %}
+                                        <span class="badge rounded-pill bg-secondary">{{ ticket.prioridad.nombre }}</span>
+                                    {% else %}
+                                        <span class="badge rounded-pill bg-primary">{{ ticket.prioridad.nombre }}</span>
+                                    {% endif %}
+                                {% endwith %}
                             </td>
                             <td class="text-center">
                                 {% if ticket.estado == 'cerrado' or ticket.estado == 'resuelto' %}<span class="badge rounded-pill bg-success">{{ ticket.get_estado_display }}</span>{% elif ticket.estado == 'progreso' %}<span class="badge rounded-pill bg-primary">{{ ticket.get_estado_display }}</span>{% else %}<span class="badge rounded-pill bg-light text-dark">{{ ticket.get_estado_display }}</span>{% endif %}
@@ -162,16 +174,17 @@
         const estadosLabels = ticketsPorEstadoData.map(item => item.estado.charAt(0).toUpperCase() + item.estado.slice(1));
         const estadosTotals = ticketsPorEstadoData.map(item => item.total);
 
-        const prioridadesLabels = ticketsPorPrioridadData.map(item => item.prioridad.charAt(0).toUpperCase() + item.prioridad.slice(1));
-        const prioridadesTotals = ticketsPorPrioridadData.map(item => item.total);
+const prioridadesLabels = ticketsPorPrioridadData.map(item => item.nombre);
+const prioridadesClaves = ticketsPorPrioridadData.map(item => item.clave);
+const prioridadesTotals = ticketsPorPrioridadData.map(item => item.total);
         
         const backgroundColors = ['#4e73df', '#1cc88a', '#36b9cc', '#e74a3b', '#f6c23e'];
-        const priorityColors = {
-            'Baja': '#36b9cc',
-            'Media': '#4e73df',
-            'Alta': '#f6c23e',
-            'Critica': '#e74a3b',
-        };
+    const priorityColors = {
+        'baja': '#36b9cc',
+        'media': '#4e73df',
+        'alta': '#f6c23e',
+        'critica': '#e74a3b',
+    };
         const stateColors = {
             'Abierto': '#f6c23e',
             'Progreso': '#4e73df',
@@ -200,7 +213,7 @@
                 labels: prioridadesLabels,
                 datasets: [{
                     data: prioridadesTotals,
-                    backgroundColor: prioridadesLabels.map(label => priorityColors[label] || '#dddfeb'),
+                    backgroundColor: prioridadesClaves.map(clave => priorityColors[clave] || '#dddfeb'),
                 }]
             },
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }

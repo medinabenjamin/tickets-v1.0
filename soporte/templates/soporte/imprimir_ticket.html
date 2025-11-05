@@ -72,7 +72,7 @@
                 </div>
                 <div class="col-md-6">
                     <p><strong>Estado:</strong> {{ ticket.get_estado_display }}</p>
-                    <p><strong>Prioridad:</strong> {{ ticket.get_prioridad_display }}</p>
+                    <p><strong>Prioridad:</strong> {{ ticket.prioridad.nombre }} ({{ ticket.prioridad.minutos_resolucion }} min)</p>
                     <p><strong>Categoría:</strong> {{ ticket.get_categoria_display }}</p>
                     <p><strong>Tipo:</strong> {{ ticket.get_tipo_ticket_display }}</p>
                 </div>

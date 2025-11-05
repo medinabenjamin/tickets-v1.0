@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import User
+from django.utils.text import slugify
 
-from .models import Adjunto, Comment, Ticket
+from .models import Adjunto, Comment, Prioridad, Ticket
 from .roles import (
     ROLE_CHOICES,
     assign_role_to_user,
@@ -34,6 +35,13 @@ class TicketForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['fecha_compromiso_respuesta'].disabled = True
         self.fields['estado_sla'].disabled = True
+        prioridades_qs = Prioridad.objects.order_by("orden", "nombre")
+        self.fields['prioridad'].queryset = prioridades_qs
+        self.fields['prioridad'].empty_label = None
+        if not self.instance.pk and not self.initial.get('prioridad'):
+            default_prioridad = prioridades_qs.first()
+            if default_prioridad:
+                self.fields['prioridad'].initial = default_prioridad
 
 
 class TechTicketForm(forms.ModelForm):
@@ -55,6 +63,34 @@ class TechTicketForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['fecha_compromiso_respuesta'].disabled = True
         self.fields['estado_sla'].disabled = True
+        self.fields['prioridad'].queryset = Prioridad.objects.order_by("orden", "nombre")
+        self.fields['prioridad'].empty_label = None
+
+
+class PrioridadForm(forms.ModelForm):
+    """Formulario para crear y actualizar prioridades de SLA."""
+
+    class Meta:
+        model = Prioridad
+        fields = [
+            "nombre",
+            "clave",
+            "minutos_resolucion",
+            "orden",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            existing_class = field.widget.attrs.get('class', '')
+            clases = f"{existing_class} form-control".strip()
+            field.widget.attrs['class'] = clases
+
+    def clean_clave(self):
+        clave = slugify(self.cleaned_data['clave'])
+        if not clave:
+            raise forms.ValidationError("Ingresa un identificador válido.")
+        return clave
 
 
 class CommentForm(forms.ModelForm):
