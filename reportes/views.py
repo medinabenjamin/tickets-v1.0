@@ -12,7 +12,7 @@ def dashboard_reportes(request):
     """
     # Si el usuario no es superusuario, se redirige al dashboard principal.
     if not request.user.is_superuser:
-        return redirect('dashboard') 
+        return redirect('dashboard_principal')
         
     # --- Métricas Clave (KPIs) ---
     

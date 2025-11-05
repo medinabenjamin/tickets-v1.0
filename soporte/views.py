@@ -64,7 +64,7 @@ def inicio(request):
     if not request.user.is_authenticated:
         return redirect('login') 
     if request.user.is_staff:
-        return redirect('dashboard')
+        return redirect('dashboard_principal')
     else:
         return redirect('crear_ticket')
 

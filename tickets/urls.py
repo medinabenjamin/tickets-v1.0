@@ -27,7 +27,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('', lambda r: redirect('dashboard') if r.user.is_authenticated else redirect('login')),
+    path('', lambda r: redirect('dashboard_principal') if r.user.is_authenticated else redirect('login')),
     path("", include("soporte.urls")),  # <- conecta la app soporte
     path("accounts/", include("django.contrib.auth.urls")),
     path('reportes/', include('reportes.urls')),

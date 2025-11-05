@@ -116,7 +116,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-LOGIN_REDIRECT_URL = '/'  # Redirige a la raíz del sitio
+LOGIN_REDIRECT_URL = 'dashboard_principal'  # Redirige al dashboard principal tras iniciar sesión
 STATIC_URL = 'static/'
 
 # Default primary key field type
@@ -135,7 +135,7 @@ EMAIL_HOST_PASSWORD = 'tu_contraseña_o_app_password' # Tu contraseña o una con
 
 # ... other settings
 
-LOGIN_REDIRECT_URL = 'dashboard'  # Or wherever you redirect after login
+LOGIN_REDIRECT_URL = 'dashboard_principal'  # Or wherever you redirect after login
 
 # This is the key line to change
 LOGOUT_REDIRECT_URL = 'login'

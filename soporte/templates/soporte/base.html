@@ -91,8 +91,8 @@
             <div class="list-group list-group-flush">
                 
                 {% if request.user.is_staff %}
-                <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action bg-dark text-white">
-                    <i class="fas fa-tachometer-alt"></i> Panel de control
+                <a href="{% url 'dashboard_principal' %}" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard principal
                 </a>
                 {% endif %}
                 
@@ -101,8 +101,8 @@
                 </a>
                 
                 {% if request.user.is_superuser %}
-                    <a href="{% url 'dashboard_reportes' %}" class="list-group-item list-group-item-action bg-dark text-white">
-                        <i class="fas fa-chart-line"></i> Panel de reportes
+                    <a href="{% url 'dashboard_de_reportes' %}" class="list-group-item list-group-item-action bg-dark text-white">
+                        <i class="fas fa-chart-line"></i> Dashboard de reportes
                     </a>
                     <a href="{% url 'mantenedor_usuarios' %}" class="list-group-item list-group-item-action bg-dark text-white">
                         <i class="fas fa-users-cog"></i> Usuarios y Roles
