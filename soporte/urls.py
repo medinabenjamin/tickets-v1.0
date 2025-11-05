@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     # Vistas de Navegación Principal
-    path("dashboard/", views.dashboard, name="dashboard"),
+    path("dashboard-principal/", views.dashboard, name="dashboard_principal"),
     path("tickets/", views.home, name="home_tickets"),
     path("crear/", views.crear_ticket, name="crear_ticket"),
     path('salir/', views.salir, name="salir"),
