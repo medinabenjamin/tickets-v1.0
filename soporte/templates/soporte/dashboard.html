@@ -87,6 +87,43 @@
         <div class="col-lg-6 mb-4">
             <div class="card shadow">
                 <div class="card-header bg-dark text-white">
+                    <h6 class="m-0 fw-bold"><i class="fas fa-clock me-2"></i>Tiempo promedio de resolución</h6>
+                </div>
+                <div class="card-body">
+                    {% if promedio_resolucion %}
+                        <p class="h4 mb-0 fw-bold text-gray-800">{{ promedio_resolucion }}</p>
+                    {% else %}
+                        <p class="text-muted mb-0">Sin datos aún.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="m-0 fw-bold"><i class="fas fa-tachometer-alt me-2"></i>Resumen SLA</h6>
+                </div>
+                <div class="card-body">
+                    {% if sla_resumen %}
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for entry in sla_resumen %}
+                                <span class="badge rounded-pill {% if entry.estado_sla == 'cumplido' %}bg-success{% elif entry.estado_sla == 'vencido' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {{ entry.estado_sla|default:"Sin estado"|capfirst }}: {{ entry.total }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Sin datos de SLA disponibles.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
                     <h6 class="m-0 fw-bold"><i class="fas fa-chart-pie me-2"></i>Tickets por Prioridad</h6>
                 </div>
                 <div class="card-body">
@@ -102,6 +139,36 @@
                 <div class="card-body">
                     <canvas id="chart-estado"></canvas>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            <h6 class="m-0 fw-bold"><i class="fas fa-user-cog me-2"></i>Tickets por técnico</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Técnico</th>
+                            <th class="text-center">Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in tickets_por_tecnico %}
+                            <tr>
+                                <td>{{ entry.tecnico_asignado__username }}</td>
+                                <td class="text-center fw-bold">{{ entry.total }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted py-4">No hay tickets asignados a técnicos.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
