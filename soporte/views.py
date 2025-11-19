@@ -4,8 +4,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib import messages 
-from django.db.models import Count, Max, ProtectedError, Q
+from django.contrib import messages # <--- IMPORTACIÓN AÑADIDA
+from django.db.models import Avg, Count, Max, ProtectedError, Q
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -199,6 +199,33 @@ def dashboard(request):
     tickets_abiertos = Ticket.objects.filter(estado='abierto').count()
     tickets_en_progreso = Ticket.objects.filter(estado='progreso').count()
     tickets_cerrados = Ticket.objects.filter(estado__in=['resuelto', 'cerrado']).count()
+
+    tickets_resueltos = Ticket.objects.filter(
+        estado__in=['resuelto', 'cerrado'],
+        tiempo_resolucion__isnull=False,
+    )
+    promedio_resolucion_timedelta = tickets_resueltos.aggregate(
+        promedio=Avg('tiempo_resolucion')
+    ).get('promedio')
+    promedio_resolucion = None
+    if promedio_resolucion_timedelta:
+        total_seconds = int(promedio_resolucion_timedelta.total_seconds())
+        horas, remainder = divmod(total_seconds, 3600)
+        minutos, _ = divmod(remainder, 60)
+        promedio_resolucion = f"{horas} horas {minutos} minutos"
+
+    tickets_por_tecnico = (
+        Ticket.objects.exclude(tecnico_asignado__isnull=True)
+        .values('tecnico_asignado__username')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    sla_resumen = (
+        Ticket.objects.values('estado_sla')
+        .annotate(total=Count('id'))
+        .order_by('estado_sla')
+    )
     tickets_recientes = (
         Ticket.objects.select_related('prioridad', 'solicitante')
         .all()
@@ -222,7 +249,8 @@ def dashboard(request):
         'total_tickets': total_tickets, 'tickets_abiertos': tickets_abiertos,
         'tickets_en_progreso': tickets_en_progreso, 'tickets_cerrados': tickets_cerrados,
         'tickets_recientes': tickets_recientes, 'tickets_por_estado': tickets_por_estado,
-        'tickets_por_prioridad': tickets_por_prioridad,
+        'tickets_por_prioridad': tickets_por_prioridad, 'promedio_resolucion': promedio_resolucion,
+        'tickets_por_tecnico': tickets_por_tecnico, 'sla_resumen': sla_resumen,
     }
     return render(request, 'soporte/dashboard.html', context)
 
