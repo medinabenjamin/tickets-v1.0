@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib import messages # <--- IMPORTACIÓN AÑADIDA
+from django.contrib import messages 
 from django.db.models import Count, Max, ProtectedError, Q
 from django.core.mail import send_mail
 from django.conf import settings
