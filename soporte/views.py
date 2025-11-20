@@ -199,7 +199,7 @@ def exportar_ticket_pdf(request, ticket_id):
 @login_required
 def crear_ticket(request):
     if request.method == "POST":
-        form = TicketForm(request.POST, request.FILES) 
+        form = TicketForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             ticket = form.save(commit=False)
             ticket.solicitante = request.user
@@ -213,7 +213,7 @@ def crear_ticket(request):
                 Adjunto.objects.create(ticket=ticket, archivo=archivo_adjunto, subido_por=request.user)
             return redirect('home_tickets')
     else:
-        form = TicketForm()
+        form = TicketForm(user=request.user)
     return render(request, "soporte/crear_ticket.html", {'form': form})
 
 @login_required
