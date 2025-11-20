@@ -21,7 +21,6 @@ class TicketForm(forms.ModelForm):
             'titulo',
             'categoria',
             'prioridad',
-            'tipo_ticket',
             'area_funcional',
             'descripcion',
             'fecha_compromiso_respuesta',
@@ -32,7 +31,8 @@ class TicketForm(forms.ModelForm):
             'fecha_compromiso_respuesta': forms.DateTimeInput(attrs={'readonly': True}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
         super().__init__(*args, **kwargs)
         self.fields['fecha_compromiso_respuesta'].disabled = True
         self.fields['estado_sla'].disabled = True
@@ -43,6 +43,43 @@ class TicketForm(forms.ModelForm):
             default_prioridad = prioridades_qs.first()
             if default_prioridad:
                 self.fields['prioridad'].initial = default_prioridad
+
+        if self.user and not self.user.is_staff:
+            hidden_fields = [
+                'categoria',
+                'prioridad',
+                'fecha_compromiso_respuesta',
+                'estado_sla',
+            ]
+            for field_name in hidden_fields:
+                if field_name in self.fields:
+                    self.fields[field_name].widget = forms.HiddenInput()
+                    self.fields[field_name].required = False
+
+            if 'categoria' in self.fields and not self.fields['categoria'].initial:
+                self.fields['categoria'].initial = Ticket._meta.get_field('categoria').default
+            if 'prioridad' in self.fields and not self.fields['prioridad'].initial:
+                default_prioridad = prioridades_qs.first()
+                if default_prioridad:
+                    self.fields['prioridad'].initial = default_prioridad
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.user and not self.user.is_staff:
+            if 'categoria' in self.fields and not cleaned_data.get('categoria'):
+                cleaned_data['categoria'] = (
+                    self.fields['categoria'].initial
+                    or Ticket._meta.get_field('categoria').default
+                )
+            if 'prioridad' in self.fields:
+                prioridades_qs = self.fields['prioridad'].queryset
+                prioridad_default = (
+                    cleaned_data.get('prioridad')
+                    or self.fields['prioridad'].initial
+                    or prioridades_qs.first()
+                )
+                cleaned_data['prioridad'] = prioridad_default
+        return cleaned_data
 
 
 class TechTicketForm(forms.ModelForm):
