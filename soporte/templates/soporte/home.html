@@ -15,56 +15,60 @@
         </a>
     </div>
 
+    <div class="card-custom mb-4">
+        <div class="card-custom-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-filter"></i>
+                <span>Filtros de búsqueda</span>
+            </div>
+        </div>
+        <div class="p-3">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="id_search" class="form-label">Búsqueda general</label>
+                    <input type="text" id="id_search" name="search" class="form-control" placeholder="Título o descripción..." value="{{ request.GET.search|default_if_none:search_query|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="id_estado" class="form-label">Estado</label>
+                    <select name="estado" id="id_estado" class="form-select">
+                        <option value="">Todos</option>
+                        {% for value, label in estados %}
+                            <option value="{{ value }}" {% if request.GET.estado == value or selected_estado == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="id_prioridad" class="form-label">Prioridad</label>
+                    <select name="prioridad" id="id_prioridad" class="form-select">
+                        <option value="">Todas</option>
+                        {% for prioridad in prioridades %}
+                            <option value="{{ prioridad.clave }}" {% if request.GET.prioridad == prioridad.clave or selected_prioridad == prioridad.clave %}selected{% endif %}>{{ prioridad.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if request.user.is_staff %}
+                <div class="col-md-2">
+                    <label for="id_tecnico" class="form-label">Técnico</label>
+                    <select name="tecnico" id="id_tecnico" class="form-select">
+                        <option value="">Todos</option>
+                        {% for tecnico in tecnicos %}
+                            <option value="{{ tecnico.username }}" {% if request.GET.tecnico == tecnico.username or selected_tecnico == tecnico.username %}selected{% endif %}>{{ tecnico.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-md-3 col-lg-2 ms-auto d-grid">
+                    <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card-custom">
         <div class="card-custom-header d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
                 <i class="fas fa-list"></i>
                 <span>Tickets Registrados</span>
-            </div>
-            <a class="btn btn-sm btn-outline-light" data-bs-toggle="collapse" href="#collapseFilters" role="button" aria-expanded="false" aria-controls="collapseFilters">
-                <i class="fas fa-filter me-1"></i> Búsqueda Avanzada
-            </a>
-        </div>
-        <div class="collapse mt-3" id="collapseFilters">
-            <div class="card-custom p-3">
-                <form method="get" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label for="id_q" class="form-label">Buscar por palabra clave</label>
-                        <input type="text" name="q" id="id_q" class="form-control" placeholder="Título o descripción..." value="{{ search_query|default:'' }}">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="id_estado" class="form-label">Estado</label>
-                        <select name="estado" id="id_estado" class="form-select">
-                            <option value="">Todos</option>
-                            {% for value, label in estados %}
-                                <option value="{{ value }}" {% if selected_estado == value %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="id_prioridad" class="form-label">Prioridad</label>
-                        <select name="prioridad" id="id_prioridad" class="form-select">
-                            <option value="">Todas</option>
-                            {% for prioridad in prioridades %}
-                                <option value="{{ prioridad.clave }}" {% if selected_prioridad == prioridad.clave %}selected{% endif %}>{{ prioridad.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% if request.user.is_staff %}
-                    <div class="col-md-2">
-                        <label for="id_tecnico" class="form-label">Técnico Asignado</label>
-                        <select name="tecnico" id="id_tecnico" class="form-select">
-                            <option value="">Todos</option>
-                            {% for tecnico in tecnicos %}
-                                <option value="{{ tecnico.username }}" {% if selected_tecnico == tecnico.username %}selected{% endif %}>{{ tecnico.username }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% endif %}
-                    <div class="col-md-2 d-grid">
-                        <button type="submit" class="btn btn-primary">Filtrar</button>
-                    </div>
-                </form>
             </div>
         </div>
         <div class="table-responsive mt-3">
