@@ -24,7 +24,7 @@
         </div>
         <div class="table-responsive">
             <table class="table table-custom mb-0 align-middle">
-                    <thead class="table-light">
+                    <thead class="table-dark">
                         <tr>
                             <th scope="col">Nombre</th>
                             <th scope="col">Identificador</th>
@@ -37,7 +37,21 @@
                         {% for prioridad in prioridades %}
                             <tr>
                                 <td>{{ prioridad.nombre }}</td>
-                                <td><span class="badge bg-secondary text-uppercase">{{ prioridad.clave }}</span></td>
+                                <td class="text-center">
+                                    {% with clave=prioridad.clave %}
+                                        {% if clave == 'critica' %}
+                                            <span class="badge rounded-pill bg-danger">{{ prioridad.nombre }}</span>
+                                        {% elif clave == 'alta' %}
+                                            <span class="badge rounded-pill bg-warning text-dark">{{ prioridad.nombre }}</span>
+                                        {% elif clave == 'media' %}
+                                            <span class="badge rounded-pill bg-info text-dark">{{ prioridad.nombre }}</span>
+                                        {% elif clave == 'baja' %}
+                                            <span class="badge rounded-pill bg-secondary">{{ prioridad.nombre }}</span>
+                                        {% else %}
+                                            <span class="badge rounded-pill bg-primary">{{ prioridad.nombre }}</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
                                 <td>{{ prioridad.minutos_resolucion }} min</td>
                                 <td>{{ prioridad.orden }}</td>
                                 <td class="text-end">
