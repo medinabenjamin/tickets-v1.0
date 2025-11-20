@@ -1,0 +1,66 @@
+{% extends 'soporte/base.html' %}
+{% block title %}{{ modo|capfirst }} FAQ{% endblock %}
+{% block content %}
+<h2 class="page-title">{% if modo == 'editar' %}Editar Pregunta Frecuente{% else %}Nueva Pregunta Frecuente{% endif %}</h2>
+<div class="card-custom">
+  <div class="card-custom-header">
+    <i class="fas fa-pen-to-square"></i> Datos de la pregunta
+  </div>
+  <form method="post" enctype="multipart/form-data" class="p-3">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Título de la pregunta</label>
+      {{ form.pregunta }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Respuesta</label>
+      {{ form.respuesta }}
+    </div>
+    <div class="row g-2">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Categoría</label>
+        {{ form.categoria }}
+      </div>
+      <div class="col-md-6 mb-3 d-flex align-items-center gap-2">
+        {{ form.activo }}
+        <label class="form-check-label">Activo</label>
+      </div>
+    </div>
+
+    <div class="card-custom mt-3">
+      <div class="card-custom-header">
+        <i class="fas fa-list-ol"></i> Pasos para solucionarlo (opcional)
+      </div>
+      <div class="p-3">
+        {{ formset.management_form }}
+        {% for f in formset %}
+          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+          <div class="row g-2 align-items-end mb-2">
+            <div class="col-2">
+              <label class="form-label">Orden</label>
+              {{ f.orden }}
+            </div>
+            <div class="col-7">
+              <label class="form-label">Descripción</label>
+              {{ f.descripcion }}
+            </div>
+            <div class="col-3">
+              <label class="form-label">Adjunto (opcional)</label>
+              {{ f.adjunto }}
+            </div>
+            <div class="col-12">
+              {% if f.instance.pk %}{{ f.DELETE }} <label class="form-check-label">Eliminar este paso</label>{% endif %}
+            </div>
+          </div>
+          <hr>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <a href="{% url 'lista_faqs' %}" class="btn btn-outline-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-success">Guardar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
