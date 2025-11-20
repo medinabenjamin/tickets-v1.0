@@ -9,7 +9,7 @@ from django.db.models import Avg, Count, Max, ProtectedError, Q
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 import csv
 from .models import Ticket, Comment, Adjunto, Prioridad
 from .forms import (
@@ -138,9 +138,20 @@ def detalle_ticket(request, ticket_id):
         return redirect('home_tickets')
     comments = _comentarios_ticket(ticket)
     tech_form = TechTicketForm(instance=ticket)
+    form_acciones = TechTicketForm(instance=ticket)
     comment_form = CommentForm()
     if request.method == "POST":
-        if 'tech_form_submit' in request.POST and request.user.is_staff:
+        if request.POST.get('accion') == 'actualizar_acciones':
+            if not request.user.is_staff:
+                return HttpResponseForbidden()
+            form_acciones = TechTicketForm(request.POST, instance=ticket)
+            if form_acciones.is_valid():
+                prioridad_cambiada = 'prioridad' in form_acciones.changed_data
+                form_acciones.save()
+                if prioridad_cambiada:
+                    ticket.refresh_from_db(fields=['fecha_compromiso_respuesta', 'estado_sla'])
+                return redirect('detalle_ticket', ticket_id=ticket.id)
+        elif 'tech_form_submit' in request.POST and request.user.is_staff:
             tech_form = TechTicketForm(request.POST, instance=ticket)
             if tech_form.is_valid():
                 tech_form.save()
@@ -162,6 +173,7 @@ def detalle_ticket(request, ticket_id):
     context = {
         'ticket': ticket, 'comments': comments,
         'comment_form': comment_form, 'tech_form': tech_form,
+        'form_acciones': form_acciones,
     }
     return render(request, "soporte/detalle_ticket.html", context)
 
