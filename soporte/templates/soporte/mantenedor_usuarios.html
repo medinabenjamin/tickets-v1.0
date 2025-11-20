@@ -5,19 +5,14 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4 gap-2">
-        <div>
-            <h1 class="display-6 fw-bold mb-0 text-white bg-dark px-3 py-2 rounded">Mantenedor de Usuarios</h1>
-            <p class="text-muted mb-0">Administra el ciclo de vida completo de los usuarios del sistema.</p>
-        </div>
-        <span class="badge bg-dark text-white fs-6 align-self-start align-self-lg-center">{{ usuarios.count }} usuarios registrados</span>
-    </div>
+    <h2 class="page-title">Mantenedor de Usuarios</h2>
+    <p class="page-subtitle">Administra el ciclo de vida completo de los usuarios del sistema.</p>
 
     <div class="row g-4">
         <div class="col-12 col-lg-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-dark border-0">
-                    <h5 class="mb-0 text-white"><i class="fas fa-user-plus me-2 text-white"></i>Crear nuevo usuario</h5>
+            <div class="card-custom h-100">
+                <div class="card-custom-header">
+                    <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Crear nuevo usuario</h5>
                 </div>
                 <div class="card-body">
                     <form method="post" novalidate>
@@ -77,14 +72,14 @@
         </div>
 
         <div class="col-12 col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-dark border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-white"><i class="fas fa-users me-2 text-white"></i>Usuarios registrados</h5>
+            <div class="card-custom">
+                <div class="card-custom-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Usuarios registrados</h5>
                     <span class="badge bg-dark text-white">{{ usuarios.count }} en total</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle mb-0 table-custom">
                             <thead class="table-light">
                                 <tr>
                                     <th scope="col">Usuario</th>
@@ -104,13 +99,13 @@
                                     <td class="d-none d-sm-table-cell">{{ user.email|default:'-' }}</td>
                                     <td class="text-center">
                                         {% if user.is_active %}
-                                            <span class="badge rounded-pill bg-success">Activo</span>
+                                            <span class="badge badge-estado-activo">Activo</span>
                                         {% else %}
                                             <span class="badge rounded-pill bg-danger">Inactivo</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge {{ user.role_badge }}" title="{{ user.role_label }}">{{ user.role_label }}</span>
+                                        <span class="badge {% if user.role_label == 'Administrador' %}badge-rol-admin{% elif user.role_label == 'Solicitante' %}badge-rol-solicitante{% endif %} {{ user.role_badge }}" title="{{ user.role_label }}">{{ user.role_label }}</span>
                                     </td>
                                     <td class="text-end">
                                         <div class="btn-group" role="group">
