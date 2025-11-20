@@ -1,15 +1,15 @@
 {% extends 'soporte/base.html' %}
 {% block title %}{{ titulo }} - Gestión SLA{% endblock %}
 {% block content %}
-<div class="py-4">
+<div class="main-container">
     <div class="mb-3">
         <a href="{% url 'sla_prioridades' %}" class="btn btn-link text-decoration-none">
             <i class="fas fa-arrow-left me-1"></i> Volver a las prioridades
         </a>
     </div>
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h1 class="h4 mb-0">{{ titulo }}</h1>
+    <div class="card-custom">
+        <div class="card-custom-header">
+            <h1 class="page-title mb-0">{{ titulo }}</h1>
         </div>
         <div class="card-body">
             <form method="post" novalidate>

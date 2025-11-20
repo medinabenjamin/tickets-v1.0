@@ -1,10 +1,11 @@
 {% extends 'soporte/base.html' %}
 {% block title %}Eliminar prioridad - Gestión SLA{% endblock %}
 {% block content %}
-<div class="py-4">
-    <div class="card border-danger shadow-sm">
-        <div class="card-header bg-danger text-white">
-            <h1 class="h4 mb-0">Eliminar prioridad</h1>
+<div class="main-container">
+    <div class="card-custom">
+        <div class="card-custom-header d-flex align-items-center gap-2">
+            <i class="fas fa-trash"></i>
+            <h1 class="page-title mb-0">Eliminar prioridad</h1>
         </div>
         <div class="card-body">
             <p class="mb-4">¿Estás seguro de que deseas eliminar la prioridad <strong>{{ prioridad.nombre }}</strong>?</p>
