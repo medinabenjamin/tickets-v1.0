@@ -22,7 +22,8 @@ urlpatterns = [
     path('reportes/exportar/csv/', views.exportar_tickets_csv, name='exportar_tickets_csv'),
     
     # Mantenedor de Usuarios y Roles
-    path('mantenedor/usuarios/', views.mantenedor_usuarios, name='mantenedor_usuarios'),
+    path('usuarios/', views.mantenedor_usuarios, name='mantenedor_usuarios'),
+    path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
     path('mantenedor/usuarios/<int:user_id>/editar/', views.editar_usuario, name='editar_usuario'),
     path('mantenedor/usuarios/<int:user_id>/eliminar/', views.eliminar_usuario, name='eliminar_usuario'),
 

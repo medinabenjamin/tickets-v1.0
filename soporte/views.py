@@ -384,18 +384,13 @@ def eliminar_prioridad_sla(request, prioridad_id):
 @login_required
 @user_passes_test(es_superusuario)
 def mantenedor_usuarios(request):
-    """Muestra el listado de usuarios y permite crear nuevos registros."""
+    """Muestra el listado de usuarios y sus acciones disponibles."""
 
-    if request.method == 'POST':
-        form = UserCreateForm(request.POST)
-        if form.is_valid():
-            usuario = form.save()
-            messages.success(request, f"Usuario {usuario.username} creado exitosamente.")
-            return redirect('mantenedor_usuarios')
-    else:
-        form = UserCreateForm()
-
-    usuarios_qs = User.objects.all().order_by('username').prefetch_related('groups')
+    usuarios_qs = (
+        User.objects.all()
+        .order_by('-is_active', 'username')
+        .prefetch_related('groups')
+    )
     usuarios = list(usuarios_qs)
     for usuario in usuarios:
         role_key = get_user_role(usuario)
@@ -404,10 +399,29 @@ def mantenedor_usuarios(request):
         usuario.role_badge = get_role_badge_class(role_key)
     context = {
         'usuarios': usuarios,
+    }
+    return render(request, 'soporte/usuarios_list.html', context)
+
+
+@login_required
+@user_passes_test(es_superusuario)
+def crear_usuario(request):
+    """Renderiza el formulario de creación de usuarios y procesa el guardado."""
+
+    if request.method == 'POST':
+        form = UserCreateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Usuario creado correctamente.")
+            return redirect('mantenedor_usuarios')
+    else:
+        form = UserCreateForm()
+
+    context = {
         'form': form,
         'role_definitions': ROLE_DEFINITIONS,
     }
-    return render(request, 'soporte/mantenedor_usuarios.html', context)
+    return render(request, 'soporte/usuarios_crear.html', context)
 
 
 @login_required
