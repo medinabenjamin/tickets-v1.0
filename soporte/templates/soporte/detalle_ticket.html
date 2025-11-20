@@ -4,34 +4,71 @@
 {% block title %}Detalle del Ticket #{{ ticket.id }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row">
+<div class="container-fluid">
+    <h2 class="page-title">Detalle del Ticket #{{ ticket.id }}</h2>
+    <p class="page-subtitle">{{ ticket.titulo }}</p>
+
+    <div class="row g-4">
         <div class="col-lg-8">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h1 class="display-6 fw-bold mb-1">{{ ticket.titulo }}</h1>
-                            <p class="text-muted mb-0">Ticket #{{ ticket.id }}</p>
+            <div class="card-custom mb-4">
+                <div class="card-custom-header">
+                    <i class="fas fa-ticket-alt"></i> Resumen del ticket
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 align-items-start">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="fw-bold me-2">Estado:</span>
+                                {% if ticket.estado == 'cerrado' or ticket.estado == 'resuelto' %}
+                                    <span class="badge rounded-pill bg-success fs-6">{{ ticket.get_estado_display }}</span>
+                                {% elif ticket.estado == 'progreso' %}
+                                    <span class="badge rounded-pill bg-primary fs-6">{{ ticket.get_estado_display }}</span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-warning text-dark fs-6">{{ ticket.get_estado_display }}</span>
+
+                                {% endif %}
+                            </div>
+                            <p class="mb-2"><span class="fw-bold">Solicitante:</span> {{ ticket.solicitante.username }}</p>
+                            <p class="mb-2"><span class="fw-bold">Técnico asignado:</span> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</p>
+                            <p class="mb-2"><span class="fw-bold">Categoría:</span> {{ ticket.get_categoria_display }}</p>
+                            <p class="mb-2"><span class="fw-bold">Área:</span> {{ ticket.get_area_funcional_display }}</p>
                         </div>
-                        <div>
-                            {% if ticket.estado == 'cerrado' or ticket.estado == 'resuelto' %}
-                                <span class="badge rounded-pill bg-success fs-6">{{ ticket.get_estado_display }}</span>
-                            {% elif ticket.estado == 'progreso' %}
-                                <span class="badge rounded-pill bg-primary fs-6">{{ ticket.get_estado_display }}</span>
-                            {% else %}
-                                <span class="badge rounded-pill bg-warning text-dark fs-6">{{ ticket.get_estado_display }}</span>
+                        <div class="col-md-6">
+                            <p class="mb-2"><span class="fw-bold">Prioridad:</span> {{ ticket.prioridad.nombre }}</p>
+                            <p class="mb-2"><span class="fw-bold">Tiempo objetivo de resolución:</span> {{ ticket.prioridad.minutos_resolucion }} minutos</p>
+                            <p class="mb-2"><span class="fw-bold">Compromiso de respuesta:</span>
+                                {% if ticket.fecha_compromiso_respuesta %}
+                                    {{ ticket.fecha_compromiso_respuesta|date:"d M Y, H:i" }}
+                                {% else %}
+                                    <span class="text-muted">No definido</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-2"><span class="fw-bold">Estado SLA:</span>
+                                {% if ticket.estado_sla == ticket.SLA_ESTADO_CUMPLIDO %}
+                                    <span class="badge bg-success">{{ ticket.get_estado_sla_display }}</span>
+                                {% elif ticket.estado_sla == ticket.SLA_ESTADO_VENCIDO %}
+                                    <span class="badge bg-danger">{{ ticket.get_estado_sla_display }}</span>
+                                {% elif ticket.estado_sla == ticket.SLA_ESTADO_PENDIENTE %}
+                                    <span class="badge bg-warning text-dark">{{ ticket.get_estado_sla_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ ticket.get_estado_sla_display }}</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-2"><span class="fw-bold">Creado:</span> {{ ticket.fecha_creacion|date:"d M Y, H:i" }}</p>
+                            {% if ticket.fecha_cierre %}
+                                <p class="mb-2"><span class="fw-bold">Cerrado:</span> {{ ticket.fecha_cierre|date:"d M Y, H:i" }}</p>
+                                <p class="mb-0 text-success"><span class="fw-bold">Resolución:</span> {{ ticket.tiempo_resolucion }}</p>
                             {% endif %}
                         </div>
                     </div>
                     <hr>
-                    <p class="card-text">{{ ticket.descripcion|linebreaks }}</p>
+                    <p class="mb-0">{{ ticket.descripcion|linebreaks }}</p>
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-paperclip me-2"></i> Archivos Adjuntos</h5>
+            <div class="card-custom mb-4">
+                <div class="card-custom-header">
+                    <i class="fas fa-paperclip"></i> Archivos Adjuntos
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
@@ -53,8 +90,10 @@
             </div>
 
             {% if ticket.estado != 'cerrado' %}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><h5 class="mb-0"><i class="fas fa-reply me-2"></i> Agregar Comentario</h5></div>
+            <div class="card-custom mb-4">
+                <div class="card-custom-header">
+                    <i class="fas fa-plus-circle"></i> Agregar comentario / adjunto
+                </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
@@ -74,20 +113,21 @@
             </div>
             {% endif %}
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-history me-2"></i> Historial de Actividad (Más reciente primero)</h5>
+            <div class="card-custom mb-4">
+                <div class="card-custom-header">
+                    <i class="fas fa-comments"></i> Comentarios y adjuntos
                 </div>
                 <div class="card-body">
-                    {% for comment in comments %} <div class="d-flex mb-4">
+                    {% for comment in comments %}
+                        <div class="d-flex mb-4">
                             <div class="flex-shrink-0 me-3"><i class="fas fa-user-circle fa-2x text-muted"></i></div>
                             <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between align-items-start">
                                     <h6 class="fw-bold mb-0">{{ comment.author.username }}</h6>
                                     <small class="text-muted">{{ comment.created_at|date:"d M Y, H:i" }}</small>
                                 </div>
                                 <p class="mb-0">{{ comment.text|linebreaks }}</p>
-                                
+
                                 {% if comment.adjunto %}
                                     <div class="mt-2 p-2 bg-light border rounded" style="max-width: 300px;">
                                     {% if comment.is_image %}
@@ -109,46 +149,55 @@
                 </div>
             </div>
 
-        </div> <div class="col-lg-4">
-            
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-dark text-white"><h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Detalles del Ticket</h5></div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Solicitante:</strong> {{ ticket.solicitante.username }}</li>
-                    <li class="list-group-item"><strong>Técnico:</strong> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</li>
-                    <li class="list-group-item"><strong>Categoría:</strong> {{ ticket.get_categoria_display }}</li>
-                    <li class="list-group-item"><strong>Área:</strong> {{ ticket.get_area_funcional_display }}</li>
-                    <li class="list-group-item"><strong>Prioridad:</strong> {{ ticket.prioridad.nombre }}</li>
-                    <li class="list-group-item"><strong>Tiempo objetivo de resolución:</strong> {{ ticket.prioridad.minutos_resolucion }} minutos</li>
-                    <li class="list-group-item"><strong>Compromiso de respuesta:</strong>
-                        {% if ticket.fecha_compromiso_respuesta %}
-                            {{ ticket.fecha_compromiso_respuesta|date:"d M Y, H:i" }}
-                        {% else %}
-                            <span class="text-muted">No definido</span>
-                        {% endif %}
-                    </li>
-                    <li class="list-group-item"><strong>Estado SLA:</strong>
-                        {% if ticket.estado_sla == ticket.SLA_ESTADO_CUMPLIDO %}
-                            <span class="badge bg-success">{{ ticket.get_estado_sla_display }}</span>
-                        {% elif ticket.estado_sla == ticket.SLA_ESTADO_VENCIDO %}
-                            <span class="badge bg-danger">{{ ticket.get_estado_sla_display }}</span>
-                        {% elif ticket.estado_sla == ticket.SLA_ESTADO_PENDIENTE %}
-                            <span class="badge bg-warning text-dark">{{ ticket.get_estado_sla_display }}</span>
-                        {% else %}
-                            <span class="badge bg-secondary">{{ ticket.get_estado_sla_display }}</span>
-                        {% endif %}
-                    </li>
-                    <li class="list-group-item"><strong>Creado:</strong> {{ ticket.fecha_creacion|date:"d M Y, H:i" }}</li>
-                    {% if ticket.fecha_cierre %}
-                        <li class="list-group-item"><strong>Cerrado:</strong> {{ ticket.fecha_cierre|date:"d M Y, H:i" }}</li>
-                        <li class="list-group-item text-success"><strong>Resolución:</strong> {{ ticket.tiempo_resolucion }}</li>
-                    {% endif %}
-                </ul>
+        </div>
+        <div class="col-lg-4">
+
+            <div class="card-custom mb-4">
+                <div class="card-custom-header">
+                    <i class="fas fa-info-circle"></i> Detalles del Ticket
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <p class="mb-2"><span class="fw-bold">Solicitante:</span> {{ ticket.solicitante.username }}</p>
+                            <p class="mb-2"><span class="fw-bold">Técnico:</span> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</p>
+                            <p class="mb-2"><span class="fw-bold">Categoría:</span> {{ ticket.get_categoria_display }}</p>
+                            <p class="mb-2"><span class="fw-bold">Área:</span> {{ ticket.get_area_funcional_display }}</p>
+                            <p class="mb-2"><span class="fw-bold">Prioridad:</span> {{ ticket.prioridad.nombre }}</p>
+                            <p class="mb-2"><span class="fw-bold">Tiempo objetivo de resolución:</span> {{ ticket.prioridad.minutos_resolucion }} minutos</p>
+                            <p class="mb-2"><span class="fw-bold">Compromiso de respuesta:</span>
+                                {% if ticket.fecha_compromiso_respuesta %}
+                                    {{ ticket.fecha_compromiso_respuesta|date:"d M Y, H:i" }}
+                                {% else %}
+                                    <span class="text-muted">No definido</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-2"><span class="fw-bold">Estado SLA:</span>
+                                {% if ticket.estado_sla == ticket.SLA_ESTADO_CUMPLIDO %}
+                                    <span class="badge bg-success">{{ ticket.get_estado_sla_display }}</span>
+                                {% elif ticket.estado_sla == ticket.SLA_ESTADO_VENCIDO %}
+                                    <span class="badge bg-danger">{{ ticket.get_estado_sla_display }}</span>
+                                {% elif ticket.estado_sla == ticket.SLA_ESTADO_PENDIENTE %}
+                                    <span class="badge bg-warning text-dark">{{ ticket.get_estado_sla_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ ticket.get_estado_sla_display }}</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-2"><span class="fw-bold">Creado:</span> {{ ticket.fecha_creacion|date:"d M Y, H:i" }}</p>
+                            {% if ticket.fecha_cierre %}
+                                <p class="mb-2"><span class="fw-bold">Cerrado:</span> {{ ticket.fecha_cierre|date:"d M Y, H:i" }}</p>
+                                <p class="mb-0 text-success"><span class="fw-bold">Resolución:</span> {{ ticket.tiempo_resolucion }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {% if request.user.is_staff and ticket.estado != 'cerrado' %}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-warning"><h5 class="mb-0"><i class="fas fa-edit me-2"></i> Acciones de Técnico</h5></div>
+            <div class="card-custom mb-4">
+                <div class="card-custom-header">
+                    <i class="fas fa-tools"></i> Acciones
+                </div>
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
@@ -161,10 +210,10 @@
                 </div>
             </div>
             {% endif %}
-            
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Otras Acciones</h5>
+
+            <div class="card-custom">
+                <div class="card-custom-header">
+                    <i class="fas fa-cog"></i> Otras Acciones
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
@@ -179,4 +228,7 @@
                     </div>
                 </div>
             </div>
-        </div> </div> </div> {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
