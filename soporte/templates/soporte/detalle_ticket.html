@@ -201,34 +201,36 @@
                 <div class="card-body">
                     <form method="post" class="row g-3">
                         {% csrf_token %}
-                        <input type="hidden" name="accion" value="actualizar_acciones">
 
-                        <!-- Selección de Prioridad (SLA) -->
-                        <div class="col-md-6">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Cambiar Estado</label>
+                            {% render_field form_acciones.estado class="form-select" %}
+                        </div>
+
+                        <div class="col-12">
                             <label class="form-label">Modificar SLA (Prioridad)</label>
                             {% render_field form_acciones.prioridad class="form-select" %}
                             <div class="form-text">Cambiar la prioridad recalcula la fecha compromiso SLA.</div>
                         </div>
 
-                        <!-- Selección de Técnico asignado -->
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label">Modificar técnico asignado</label>
                             {% render_field form_acciones.tecnico_asignado class="form-select" %}
                         </div>
 
-                        <div class="col-12 d-flex gap-2">
-                            <button type="submit" class="btn btn-success btn-sm">Guardar cambios</button>
-                            <a href="{% url 'mantenedor_usuarios' %}" class="btn btn-outline-secondary btn-sm">Gestionar técnicos</a>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Compromiso de respuesta</label>
+                            {% render_field form_acciones.fecha_compromiso_respuesta class="form-control" %}
                         </div>
-                    </form>
-                    <hr>
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3"><label class="form-label fw-bold">Cambiar Estado</label>{% render_field tech_form.estado class="form-select" %}</div>
-                        <div class="mb-3"><label class="form-label fw-bold">Cambiar Prioridad</label>{% render_field tech_form.prioridad class="form-select" %}</div>
-                        <div class="mb-3"><label class="form-label fw-bold">Compromiso de respuesta</label>{% render_field tech_form.fecha_compromiso_respuesta class="form-control" %}</div>
-                        <div class="mb-3"><label class="form-label fw-bold">Estado del SLA</label>{% render_field tech_form.estado_sla class="form-select" %}</div>
-                        <div class="d-grid"><button type="submit" name="tech_form_submit" class="btn btn-primary">Actualizar Ticket</button></div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Estado del SLA</label>
+                            {% render_field form_acciones.estado_sla class="form-select" %}
+                        </div>
+
+                        <div class="col-12 d-grid">
+                            <button type="submit" name="tech_form_submit" class="btn btn-primary">Actualizar Ticket</button>
+                        </div>
                     </form>
                 </div>
             </div>

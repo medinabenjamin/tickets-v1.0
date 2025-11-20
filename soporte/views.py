@@ -137,11 +137,10 @@ def detalle_ticket(request, ticket_id):
     if ticket is None:
         return redirect('home_tickets')
     comments = _comentarios_ticket(ticket)
-    tech_form = TechTicketForm(instance=ticket)
     form_acciones = TechTicketForm(instance=ticket)
     comment_form = CommentForm()
     if request.method == "POST":
-        if request.POST.get('accion') == 'actualizar_acciones':
+        if 'tech_form_submit' in request.POST:
             if not request.user.is_staff:
                 return HttpResponseForbidden()
             form_acciones = TechTicketForm(request.POST, instance=ticket)
@@ -150,11 +149,6 @@ def detalle_ticket(request, ticket_id):
                 form_acciones.save()
                 if prioridad_cambiada:
                     ticket.refresh_from_db(fields=['fecha_compromiso_respuesta', 'estado_sla'])
-                return redirect('detalle_ticket', ticket_id=ticket.id)
-        elif 'tech_form_submit' in request.POST and request.user.is_staff:
-            tech_form = TechTicketForm(request.POST, instance=ticket)
-            if tech_form.is_valid():
-                tech_form.save()
                 return redirect('detalle_ticket', ticket_id=ticket.id)
         elif 'cerrar_ticket_submit' in request.POST and request.user.is_staff:
             ticket.estado = 'cerrado'
@@ -172,7 +166,7 @@ def detalle_ticket(request, ticket_id):
                 return redirect('detalle_ticket', ticket_id=ticket.id)
     context = {
         'ticket': ticket, 'comments': comments,
-        'comment_form': comment_form, 'tech_form': tech_form,
+        'comment_form': comment_form,
         'form_acciones': form_acciones,
     }
     return render(request, "soporte/detalle_ticket.html", context)
