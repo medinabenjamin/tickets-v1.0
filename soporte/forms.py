@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import User
 from django.utils.text import slugify
@@ -52,6 +53,7 @@ class TechTicketForm(forms.ModelForm):
         fields = [
             "estado",
             "prioridad",
+            "tecnico_asignado",
             "fecha_compromiso_respuesta",
             "estado_sla",
         ]
@@ -65,6 +67,11 @@ class TechTicketForm(forms.ModelForm):
         self.fields['estado_sla'].disabled = True
         self.fields['prioridad'].queryset = Prioridad.objects.order_by("orden", "nombre")
         self.fields['prioridad'].empty_label = None
+        User = get_user_model()
+        self.fields['tecnico_asignado'].queryset = (
+            User.objects.filter(is_staff=True)
+            .order_by('first_name', 'last_name', 'username')
+        )
 
 
 class PrioridadForm(forms.ModelForm):
