@@ -90,13 +90,43 @@ def home(request):
     search_query = request.GET.get('search') or request.GET.get('q')
     if search_query:
         tickets_list = tickets_list.filter(Q(titulo__icontains=search_query) | Q(descripcion__icontains=search_query))
-    tickets = tickets_list.select_related('prioridad', 'solicitante', 'tecnico_asignado').order_by('-fecha_creacion')
+    tickets = tickets_list.select_related('prioridad', 'solicitante', 'tecnico_asignado')
+
+    sort = request.GET.get('sort')
+    direction = request.GET.get('dir', 'asc')
+    sort_map = {
+        'prioridad': 'prioridad__orden',
+        'estado': 'estado',
+        'solicitante': 'solicitante__username',
+        'tecnico': 'tecnico_asignado__username',
+        'fecha_creacion': 'fecha_creacion',
+    }
+
+    if sort in sort_map:
+        order_field = sort_map[sort]
+        if direction == 'desc':
+            order_field = '-' + order_field
+        tickets = tickets.order_by(order_field, '-fecha_creacion')
+    else:
+        tickets = tickets.order_by('-fecha_creacion')
+
+    base_querydict = request.GET.copy()
+    for param in ['sort', 'dir']:
+        if param in base_querydict:
+            base_querydict.pop(param)
+    base_query = base_querydict.urlencode()
     context = {
         "tickets": tickets,
         "estados": Ticket.ESTADO_CHOICES,
         "prioridades": Prioridad.objects.order_by("orden", "nombre"),
-        "tecnicos": User.objects.filter(is_staff=True), "selected_estado": estado_filter,
-        "selected_prioridad": prioridad_filter, "selected_tecnico": tecnico_filter, "search_query": search_query,
+        "tecnicos": User.objects.filter(is_staff=True),
+        "selected_estado": estado_filter,
+        "selected_prioridad": prioridad_filter,
+        "selected_tecnico": tecnico_filter,
+        "search_query": search_query,
+        "sort": sort,
+        "direction": direction,
+        "base_query": base_query,
     }
     return render(request, "soporte/home.html", context)
 
