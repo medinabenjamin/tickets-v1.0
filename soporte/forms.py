@@ -54,17 +54,10 @@ class TechTicketForm(forms.ModelForm):
             "estado",
             "prioridad",
             "tecnico_asignado",
-            "fecha_compromiso_respuesta",
-            "estado_sla",
         ]
-        widgets = {
-            'fecha_compromiso_respuesta': forms.DateTimeInput(attrs={'readonly': True}),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['fecha_compromiso_respuesta'].disabled = True
-        self.fields['estado_sla'].disabled = True
         self.fields['prioridad'].queryset = Prioridad.objects.order_by("orden", "nombre")
         self.fields['prioridad'].empty_label = None
         User = get_user_model()
