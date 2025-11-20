@@ -1,9 +1,4 @@
 from django.db import models
-
-# Create your models here.
-# faq/models.py
-
-from django.db import models
 from django.contrib.auth.models import User
 
 class FAQ(models.Model):
@@ -17,6 +12,19 @@ class FAQ(models.Model):
     class Meta:
         verbose_name = "Pregunta Frecuente"
         verbose_name_plural = "Preguntas Frecuentes"
-    
+
     def __str__(self):
         return self.pregunta
+
+
+class FAQPaso(models.Model):
+    faq = models.ForeignKey('FAQ', related_name='pasos', on_delete=models.CASCADE)
+    orden = models.PositiveIntegerField(default=1)
+    descripcion = models.TextField(blank=True)
+    adjunto = models.FileField(upload_to='faq/', blank=True, null=True)
+
+    class Meta:
+        ordering = ['orden']
+
+    def __str__(self):
+        return f"Paso {self.orden} - {self.faq}"

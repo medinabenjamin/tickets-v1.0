@@ -1,67 +1,95 @@
 {% extends "soporte/base.html" %}
 
-{% block title %}Centro de Autoayuda{% endblock %}
+{% block title %}Autoayuda (FAQ){% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <h2 class="page-title">Centro de Autoayuda (FAQ)</h2>
-    <p class="page-subtitle">Encuentra respuestas a las preguntas más comunes antes de crear un ticket.</p>
+<h2 class="page-title">Autoayuda (FAQ)</h2>
+<p class="page-subtitle">Encuentra respuestas a las preguntas más frecuentes.</p>
 
-    <div class="card-custom mt-4">
-        <div class="card-custom-header d-flex align-items-center">
-            <i class="fas fa-search me-2"></i>
-            <span>Buscar una Solución</span>
-        </div>
-        <div class="p-3">
-            <form method="get" class="row g-2 align-items-center">
-                <div class="col">
-                    <input class="form-control" type="search" name="q" placeholder="Escribe una palabra clave (ej: contraseña, red, impresora)..." aria-label="Search" value="{{ search_query|default:'' }}">
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-primary" type="submit">Buscar</button>
-                </div>
-            </form>
-        </div>
-    </div>
+{% if request.user.is_staff %}
+  <div class="mb-2 text-end">
+    <a href="{% url 'faq_crear' %}" class="btn btn-primary btn-sm">Nueva Pregunta Frecuente</a>
+  </div>
+{% endif %}
 
-    <div class="card-custom mt-4">
-        <div class="card-custom-header d-flex align-items-center">
-            <i class="fas fa-question-circle me-2"></i>
-            <span>Preguntas frecuentes</span>
-        </div>
-        <div class="p-4">
-            {% if faqs %}
-                {% regroup faqs by categoria as faqs_por_categoria %}
+<div class="card-custom">
+  <div class="card-custom-header d-flex align-items-center">
+    <i class="fas fa-search me-2"></i>
+    <span>Buscar una solución</span>
+  </div>
+  <div class="p-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col">
+        <input class="form-control" type="search" name="q" placeholder="Escribe una palabra clave (ej: contraseña, red, impresora)..." aria-label="Buscar" value="{{ search_query|default:'' }}">
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-primary" type="submit">Buscar</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-                {% for categoria in faqs_por_categoria %}
-                    <h3 class="mb-3 mt-4 border-bottom pb-2">{{ categoria.grouper }}</h3>
-                    <div class="accordion" id="accordion-{{ categoria.grouper|slugify }}">
-                        {% for faq in categoria.list %}
-                            <div class="accordion-item mb-2">
-                                <h2 class="accordion-header" id="heading-{{ faq.id }}">
-                                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ faq.id }}" aria-expanded="false" aria-controls="collapse-{{ faq.id }}">
-                                        {{ faq.pregunta }}
-                                    </button>
-                                </h2>
-                                <div id="collapse-{{ faq.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ faq.id }}" data-bs-parent="#accordion-{{ categoria.grouper|slugify }}">
-                                    <div class="accordion-body">
-                                        {{ faq.respuesta|linebreaks }}
-                                    </div>
-                                </div>
-                            </div>
+<div class="card-custom mt-3">
+  <div class="card-custom-header d-flex align-items-center">
+    <i class="fas fa-question-circle me-2"></i>
+    <span>Preguntas frecuentes</span>
+  </div>
+  <div class="p-4">
+    {% if faqs %}
+      {% regroup faqs by categoria as faqs_por_categoria %}
+      {% for categoria in faqs_por_categoria %}
+        <h3 class="mb-3 mt-4 border-bottom pb-2">{{ categoria.grouper }}</h3>
+        <div class="accordion" id="accordion-{{ categoria.grouper|slugify }}">
+          {% for item in categoria.list %}
+            <div class="accordion-item mb-2">
+              <h2 class="accordion-header" id="heading-{{ item.id }}">
+                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ item.id }}" aria-expanded="false" aria-controls="collapse-{{ item.id }}">
+                  {{ item.pregunta }}
+                </button>
+              </h2>
+              <div id="collapse-{{ item.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ item.id }}" data-bs-parent="#accordion-{{ categoria.grouper|slugify }}">
+                <div class="accordion-body">
+                  <div class="mb-3">{{ item.respuesta|linebreaks }}</div>
+
+                  {% with pasos=item.pasos.all %}
+                    {% if pasos %}
+                      <ol class="mb-3">
+                        {% for p in pasos %}
+                          <li class="mb-2">
+                            <div>{{ p.descripcion|linebreaksbr }}</div>
+                            {% if p.adjunto %}
+                              <div class="mt-1">
+                                <a href="{{ p.adjunto.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">Ver adjunto</a>
+                              </div>
+                            {% endif %}
+                          </li>
                         {% endfor %}
-                    </div>
-                {% endfor %}
+                      </ol>
+                    {% else %}
+                      <em>No hay pasos registrados.</em>
+                    {% endif %}
+                  {% endwith %}
 
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-search-minus fa-3x text-muted mb-3"></i>
-                    <h4>No se encontraron resultados</h4>
-                    <p class="text-muted">No hay preguntas frecuentes que coincidan con tu búsqueda: "{{ search_query }}".</p>
-                    <a href="{% url 'lista_faqs' %}" class="btn btn-primary mt-2">Ver todas las preguntas</a>
+                  {% if request.user.is_staff %}
+                    <div class="d-flex gap-2 justify-content-end">
+                      <a href="{% url 'faq_editar' item.id %}" class="btn btn-outline-secondary btn-sm">Editar</a>
+                      <a href="{% url 'faq_eliminar' item.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                    </div>
+                  {% endif %}
                 </div>
-            {% endif %}
+              </div>
+            </div>
+          {% endfor %}
         </div>
-    </div>
+      {% endfor %}
+    {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-search-minus fa-3x text-muted mb-3"></i>
+        <h4>No se encontraron resultados</h4>
+        <p class="text-muted">No hay preguntas frecuentes que coincidan con tu búsqueda: "{{ search_query }}".</p>
+        <a href="{% url 'lista_faqs' %}" class="btn btn-primary mt-2">Ver todas las preguntas</a>
+      </div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
