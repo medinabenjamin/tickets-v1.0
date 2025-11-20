@@ -125,6 +125,7 @@ def home(request):
         "selected_tecnico": tecnico_filter,
         "search_query": search_query,
         "sort": sort,
+        "dir": direction,
         "direction": direction,
         "base_query": base_query,
     }

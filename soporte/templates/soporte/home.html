@@ -89,29 +89,19 @@
                             <th scope="col">ID</th>
                             <th scope="col">Título</th>
                             <th scope="col" class="text-center">
-                                {% with next_dir=next_direction sort direction 'prioridad' %}
-                                <a class="text-white text-decoration-none" href="?{% if base_query %}{{ base_query }}&{% endif %}sort=prioridad&dir={{ next_dir }}">Prioridad</a>
-                                {% endwith %}
+                                <a class="text-white text-decoration-none" href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if request.GET.estado %}estado={{ request.GET.estado|urlencode }}&{% endif %}{% if request.GET.prioridad %}prioridad={{ request.GET.prioridad|urlencode }}&{% endif %}{% if request.GET.tecnico %}tecnico={{ request.GET.tecnico|urlencode }}&{% endif %}sort=prioridad&dir={% if sort == 'prioridad' and dir == 'asc' %}desc{% else %}asc{% endif %}">Prioridad</a>
                             </th>
                             <th scope="col" class="text-center">
-                                {% with next_dir=next_direction sort direction 'estado' %}
-                                <a class="text-white text-decoration-none" href="?{% if base_query %}{{ base_query }}&{% endif %}sort=estado&dir={{ next_dir }}">Estado</a>
-                                {% endwith %}
+                                <a class="text-white text-decoration-none" href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if request.GET.estado %}estado={{ request.GET.estado|urlencode }}&{% endif %}{% if request.GET.prioridad %}prioridad={{ request.GET.prioridad|urlencode }}&{% endif %}{% if request.GET.tecnico %}tecnico={{ request.GET.tecnico|urlencode }}&{% endif %}sort=estado&dir={% if sort == 'estado' and dir == 'asc' %}desc{% else %}asc{% endif %}">Estado</a>
                             </th>
                             <th scope="col">
-                                {% with next_dir=next_direction sort direction 'solicitante' %}
-                                <a class="text-white text-decoration-none" href="?{% if base_query %}{{ base_query }}&{% endif %}sort=solicitante&dir={{ next_dir }}">Solicitante</a>
-                                {% endwith %}
+                                <a class="text-white text-decoration-none" href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if request.GET.estado %}estado={{ request.GET.estado|urlencode }}&{% endif %}{% if request.GET.prioridad %}prioridad={{ request.GET.prioridad|urlencode }}&{% endif %}{% if request.GET.tecnico %}tecnico={{ request.GET.tecnico|urlencode }}&{% endif %}sort=solicitante&dir={% if sort == 'solicitante' and dir == 'asc' %}desc{% else %}asc{% endif %}">Solicitante</a>
                             </th>
                             <th scope="col">
-                                {% with next_dir=next_direction sort direction 'tecnico' %}
-                                <a class="text-white text-decoration-none" href="?{% if base_query %}{{ base_query }}&{% endif %}sort=tecnico&dir={{ next_dir }}">Técnico Asignado</a>
-                                {% endwith %}
+                                <a class="text-white text-decoration-none" href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if request.GET.estado %}estado={{ request.GET.estado|urlencode }}&{% endif %}{% if request.GET.prioridad %}prioridad={{ request.GET.prioridad|urlencode }}&{% endif %}{% if request.GET.tecnico %}tecnico={{ request.GET.tecnico|urlencode }}&{% endif %}sort=tecnico&dir={% if sort == 'tecnico' and dir == 'asc' %}desc{% else %}asc{% endif %}">Técnico Asignado</a>
                             </th>
                             <th scope="col">
-                                {% with next_dir=next_direction sort direction 'fecha_creacion' %}
-                                <a class="text-white text-decoration-none" href="?{% if base_query %}{{ base_query }}&{% endif %}sort=fecha_creacion&dir={{ next_dir }}">Fecha de Creación</a>
-                                {% endwith %}
+                                <a class="text-white text-decoration-none" href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if request.GET.estado %}estado={{ request.GET.estado|urlencode }}&{% endif %}{% if request.GET.prioridad %}prioridad={{ request.GET.prioridad|urlencode }}&{% endif %}{% if request.GET.tecnico %}tecnico={{ request.GET.tecnico|urlencode }}&{% endif %}sort=fecha_creacion&dir={% if sort == 'fecha_creacion' and dir == 'asc' %}desc{% else %}asc{% endif %}">Fecha de Creación</a>
                             </th>
                             <th scope="col" class="text-end">Acciones</th>
                         </tr>
