@@ -87,7 +87,7 @@ def home(request):
     tecnico_filter = request.GET.get('tecnico')
     if request.user.is_staff and tecnico_filter:
         tickets_list = tickets_list.filter(tecnico_asignado__username=tecnico_filter)
-    search_query = request.GET.get('q')
+    search_query = request.GET.get('search') or request.GET.get('q')
     if search_query:
         tickets_list = tickets_list.filter(Q(titulo__icontains=search_query) | Q(descripcion__icontains=search_query))
     tickets = tickets_list.select_related('prioridad', 'solicitante', 'tecnico_asignado').order_by('-fecha_creacion')
