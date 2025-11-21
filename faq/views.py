@@ -41,7 +41,11 @@ def faq_crear(request):
     if request.method == 'POST':
         form = FAQForm(request.POST, request.FILES)
         formset = FAQPasoFormSet(request.POST, request.FILES)
-        if form.is_valid() and formset.is_valid():
+        form_valid = form.is_valid()
+        formset_valid = formset.is_valid()
+        print(form.errors, formset.non_form_errors(), [pf.errors for pf in formset.forms])
+
+        if form_valid and formset_valid:
             faq = form.save(commit=False)
             faq.save()
             formset.instance = faq
@@ -72,7 +76,11 @@ def faq_editar(request, pk):
     if request.method == 'POST':
         form = FAQForm(request.POST, request.FILES, instance=faq)
         formset = FAQPasoFormSet(request.POST, request.FILES, instance=faq)
-        if form.is_valid() and formset.is_valid():
+        form_valid = form.is_valid()
+        formset_valid = formset.is_valid()
+        print(form.errors, formset.non_form_errors(), [pf.errors for pf in formset.forms])
+
+        if form_valid and formset_valid:
             faq = form.save(commit=False)
             faq.save()
             formset.instance = faq
