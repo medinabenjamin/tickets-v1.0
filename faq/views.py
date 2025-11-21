@@ -39,23 +39,21 @@ def faq_crear(request):
         form = FAQForm(request.POST, request.FILES)
         formset = FAQPasoFormSet(request.POST, request.FILES)
         if form.is_valid() and formset.is_valid():
-            faq = form.save()
+            faq = form.save(commit=False)
+            faq.save()
             formset.instance = faq
-            pasos_validos = []
 
-            for paso_form in formset.forms:
-                if paso_form.cleaned_data.get('DELETE'):
-                    continue
-                paso = paso_form.save(commit=False)
-                paso.faq = faq
-                pasos_validos.append(paso)
+            pasos = formset.save(commit=False)
+            for p in formset.deleted_objects:
+                p.delete()
 
-            for indice, paso in enumerate(pasos_validos, start=1):
-                paso.orden = indice
-                paso.save()
+            idx = 1
+            for p in pasos:
+                p.orden = idx
+                p.faq = faq
+                p.save()
+                idx += 1
 
-            for paso in formset.deleted_objects:
-                paso.delete()
             messages.success(request, 'Pregunta frecuente creada.')
             return redirect('lista_faqs')
     else:
@@ -72,22 +70,21 @@ def faq_editar(request, pk):
         form = FAQForm(request.POST, request.FILES, instance=faq)
         formset = FAQPasoFormSet(request.POST, request.FILES, instance=faq)
         if form.is_valid() and formset.is_valid():
-            form.save()
-            pasos_validos = []
+            faq = form.save(commit=False)
+            faq.save()
+            formset.instance = faq
 
-            for paso_form in formset.forms:
-                if paso_form.cleaned_data.get('DELETE'):
-                    continue
-                paso = paso_form.save(commit=False)
-                paso.faq = faq
-                pasos_validos.append(paso)
+            pasos = formset.save(commit=False)
+            for p in formset.deleted_objects:
+                p.delete()
 
-            for indice, paso in enumerate(pasos_validos, start=1):
-                paso.orden = indice
-                paso.save()
+            idx = 1
+            for p in pasos:
+                p.orden = idx
+                p.faq = faq
+                p.save()
+                idx += 1
 
-            for paso in formset.deleted_objects:
-                paso.delete()
             messages.success(request, 'Pregunta frecuente actualizada.')
             return redirect('lista_faqs')
     else:

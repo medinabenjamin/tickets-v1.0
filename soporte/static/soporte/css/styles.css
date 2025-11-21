@@ -198,6 +198,23 @@ body {
     overflow: hidden;
 }
 
+.faq-step-badge {
+    background: #0d6efd;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    white-space: nowrap;
+}
+
+.faq-step-thumb {
+    max-width: 120px;
+    max-height: 120px;
+    cursor: pointer;
+    object-fit: cover;
+    object-position: center;
+}
+
 .thumbnail-placeholder {
     text-align: center;
     font-size: .9rem;

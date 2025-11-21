@@ -20,6 +20,7 @@ class FAQ(models.Model):
 class FAQPaso(models.Model):
     faq = models.ForeignKey('FAQ', related_name='pasos', on_delete=models.CASCADE)
     orden = models.PositiveIntegerField(default=1)
+    titulo = models.CharField(max_length=200, blank=True)
     descripcion = models.TextField(blank=True)
     adjunto = models.FileField(upload_to='faq/', blank=True, null=True)
 
