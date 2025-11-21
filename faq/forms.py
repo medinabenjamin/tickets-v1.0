@@ -20,10 +20,14 @@ class FAQPasoForm(forms.ModelForm):
         model = FAQPaso
         fields = ['orden', 'descripcion', 'adjunto']
         widgets = {
-            'orden': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'orden': forms.HiddenInput(),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describe el paso...'}),
-            'adjunto': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'adjunto': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['orden'].required = False
 
 
 FAQPasoFormSet = inlineformset_factory(

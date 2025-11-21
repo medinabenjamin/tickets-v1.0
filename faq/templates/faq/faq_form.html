@@ -33,27 +33,74 @@
       </div>
       <div class="p-3">
         {{ formset.management_form }}
-        {% for f in formset %}
-          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
-          <div class="row g-2 align-items-end mb-2">
-            <div class="col-2">
-              <label class="form-label">Orden</label>
+        <div id="pasos-container" class="pasos-container">
+          {% for f in formset %}
+            <div class="paso-item card-custom-light">
+              {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
               {{ f.orden }}
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="step-label"><strong>Paso {{ forloop.counter }}</strong></span>
+                {% if f.instance.pk %}
+                  <label class="form-check-label d-flex align-items-center gap-2 mb-0">
+                    {{ f.DELETE }}
+                    <span>Eliminar este paso</span>
+                  </label>
+                {% endif %}
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                {{ f.descripcion }}
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Adjuntar imagen (opcional)</label>
+                <div class="d-flex gap-3 flex-wrap align-items-center">
+                  <div class="thumbnail-wrapper">
+                    {% if f.instance.adjunto %}
+                      <img src="{{ f.instance.adjunto.url }}" alt="Adjunto del paso" class="paso-thumbnail">
+                    {% else %}
+                      <div class="thumbnail-placeholder text-muted">Sin imagen</div>
+                    {% endif %}
+                  </div>
+                  <div class="flex-grow-1">
+                    {{ f.adjunto }}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-7">
+          {% endfor %}
+        </div>
+        <button type="button" class="btn btn-outline-primary mt-2" id="agregar-paso"><i class="fas fa-plus"></i> Agregar paso</button>
+
+        <template id="empty-form-template">
+          <div class="paso-item card-custom-light">
+            {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+            {{ formset.empty_form.orden }}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="step-label"><strong>Paso __number__</strong></span>
+            </div>
+            <div class="mb-3">
               <label class="form-label">Descripción</label>
-              {{ f.descripcion }}
+              {{ formset.empty_form.descripcion }}
             </div>
-            <div class="col-3">
-              <label class="form-label">Adjunto (opcional)</label>
-              {{ f.adjunto }}
-            </div>
-            <div class="col-12">
-              {% if f.instance.pk %}{{ f.DELETE }} <label class="form-check-label">Eliminar este paso</label>{% endif %}
+            <div class="mb-2">
+              <label class="form-label">Adjuntar imagen (opcional)</label>
+              <div class="d-flex gap-3 flex-wrap align-items-center">
+                <div class="thumbnail-wrapper">
+                  <div class="thumbnail-placeholder text-muted">Sin imagen</div>
+                </div>
+                <div class="flex-grow-1">
+                  {{ formset.empty_form.adjunto }}
+                </div>
+              </div>
             </div>
           </div>
-          <hr>
-        {% endfor %}
+        </template>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="image-modal" style="display: none;">
+      <div class="modal-content">
+        <img src="" alt="Vista previa de adjunto" id="modal-image">
       </div>
     </div>
 
@@ -63,4 +110,104 @@
     </div>
   </form>
 </div>
+<script>
+  const pasosContainer = document.getElementById('pasos-container');
+  const agregarPasoBtn = document.getElementById('agregar-paso');
+  const emptyFormTemplate = document.getElementById('empty-form-template');
+  const totalFormsInput = document.getElementById('id_faqpaso_set-TOTAL_FORMS');
+  const imageModal = document.getElementById('image-modal');
+  const modalImage = document.getElementById('modal-image');
+
+  const updateStepLabels = () => {
+    pasosContainer.querySelectorAll('.paso-item').forEach((item, index) => {
+      const label = item.querySelector('.step-label');
+      if (label) {
+        label.innerHTML = `<strong>Paso ${index + 1}</strong>`;
+      }
+      const ordenInput = item.querySelector('input[name$="-orden"]');
+      if (ordenInput) {
+        ordenInput.value = index + 1;
+      }
+    });
+  };
+
+  const bindImagePreview = (context) => {
+    const fileInput = context.querySelector('input[type="file"]');
+    const thumbnailWrapper = context.querySelector('.thumbnail-wrapper');
+
+    const renderPreview = (src) => {
+      let img = thumbnailWrapper.querySelector('img.paso-thumbnail');
+      if (src) {
+        if (!img) {
+          img = document.createElement('img');
+          img.classList.add('paso-thumbnail');
+          img.alt = 'Adjunto del paso';
+          thumbnailWrapper.innerHTML = '';
+          thumbnailWrapper.appendChild(img);
+        }
+        img.src = src;
+        img.addEventListener('click', () => openModal(src));
+      } else {
+        thumbnailWrapper.innerHTML = '<div class="thumbnail-placeholder text-muted">Sin imagen</div>';
+      }
+    };
+
+    if (fileInput) {
+      fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          renderPreview(URL.createObjectURL(file));
+        } else {
+          renderPreview(null);
+        }
+      });
+    }
+
+    const existingImg = thumbnailWrapper.querySelector('img.paso-thumbnail');
+    if (existingImg) {
+      existingImg.addEventListener('click', () => openModal(existingImg.src));
+    }
+  };
+
+  const openModal = (src) => {
+    if (!imageModal || !modalImage) return;
+    modalImage.src = src;
+    imageModal.style.display = 'flex';
+  };
+
+  const closeModal = () => {
+    if (!imageModal || !modalImage) return;
+    modalImage.src = '';
+    imageModal.style.display = 'none';
+  };
+
+  imageModal?.addEventListener('click', (event) => {
+    if (event.target === imageModal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && imageModal?.style.display === 'flex') {
+      closeModal();
+    }
+  });
+
+  const addPasoForm = () => {
+    const totalForms = parseInt(totalFormsInput.value, 10);
+    const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, totalForms).replace(/__number__/g, totalForms + 1);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = newFormHtml.trim();
+    const newForm = wrapper.firstElementChild;
+    pasosContainer.appendChild(newForm);
+    totalFormsInput.value = totalForms + 1;
+    bindImagePreview(newForm);
+    updateStepLabels();
+  };
+
+  agregarPasoBtn?.addEventListener('click', addPasoForm);
+
+  pasosContainer.querySelectorAll('.paso-item').forEach((item) => bindImagePreview(item));
+  updateStepLabels();
+</script>
 {% endblock %}
