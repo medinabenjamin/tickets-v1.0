@@ -43,7 +43,6 @@ def faq_crear(request):
         formset = FAQPasoFormSet(request.POST, request.FILES)
         form_valid = form.is_valid()
         formset_valid = formset.is_valid()
-        print(form.errors, formset.non_form_errors(), [pf.errors for pf in formset.forms])
 
         if form_valid and formset_valid:
             faq = form.save(commit=False)
@@ -63,6 +62,8 @@ def faq_crear(request):
 
             messages.success(request, 'Pregunta frecuente creada.')
             return redirect('lista_faqs')
+        else:
+            print(form.errors, formset.non_form_errors(), [pf.errors for pf in formset.forms])
     else:
         form = FAQForm()
         formset = FAQPasoFormSet()
@@ -78,7 +79,6 @@ def faq_editar(request, pk):
         formset = FAQPasoFormSet(request.POST, request.FILES, instance=faq)
         form_valid = form.is_valid()
         formset_valid = formset.is_valid()
-        print(form.errors, formset.non_form_errors(), [pf.errors for pf in formset.forms])
 
         if form_valid and formset_valid:
             faq = form.save(commit=False)
@@ -98,6 +98,8 @@ def faq_editar(request, pk):
 
             messages.success(request, 'Pregunta frecuente actualizada.')
             return redirect('lista_faqs')
+        else:
+            print(form.errors, formset.non_form_errors(), [pf.errors for pf in formset.forms])
     else:
         form = FAQForm(instance=faq)
         formset = FAQPasoFormSet(instance=faq)
