@@ -111,37 +111,35 @@
 
 {% block extra_js %}
 <script>
-(function() {
-  const container = document.getElementById('pasosContainer');
-  const addBtn = document.getElementById('addStepBtn');
-  const tmpl = document.getElementById('emptyStepTemplate');
-  const totalInput = document.querySelector('[name="{{ formset.prefix }}-TOTAL_FORMS"]');
+  const container   = document.getElementById('pasosContainer');
+  const addBtn      = document.getElementById('addStepBtn');
+  const tmpl        = document.getElementById('emptyStepTemplate');
+  const totalInput  = document.querySelector('[name="{{ formset.prefix }}-TOTAL_FORMS"]');
 
   function renumerar() {
     const steps = container.querySelectorAll('.faq-step');
-    steps.forEach((node, idx) => {
+    steps.forEach((node, i) => {
       const badge = node.querySelector('.faq-step-badge');
-      if (badge) badge.textContent = 'Paso ' + (idx + 1);
+      if (badge) badge.textContent = 'Paso ' + (i + 1);
       const ordenInput = node.querySelector('input[name$="-orden"]');
-      if (ordenInput) ordenInput.value = (idx + 1);
+      if (ordenInput) ordenInput.value = (i + 1);
     });
   }
 
   function wirePreview(scope) {
-    // miniatura existente -> modal
+    // thumbnail existente -> modal
     scope.querySelectorAll('img.faq-step-thumb').forEach(img => {
-      img.addEventListener('click', () => {
+      img.onclick = () => {
         const src = img.getAttribute('data-enlarge-src') || img.src;
         const modalImg = document.getElementById('imgModalContent');
         modalImg.src = src;
         new bootstrap.Modal(document.getElementById('imgModal')).show();
-      });
+      };
     });
-
-    // inputs file -> miniatura única (no duplicar)
+    // input file -> UNA miniatura, tamaño controlado por CSS
     scope.querySelectorAll('input[type="file"]').forEach(input => {
-      input.addEventListener('change', (e) => {
-        const f = e.target.files && e.target.files[0];
+      input.onchange = e => {
+        const f = input.files && input.files[0];
         if (!f || !f.type.startsWith('image/')) return;
         let thumb = input.closest('.mb-2').querySelector('img.faq-step-thumb');
         if (!thumb) {
@@ -152,34 +150,27 @@
         const url = URL.createObjectURL(f);
         thumb.src = url;
         thumb.setAttribute('data-enlarge-src', url);
-        // click para modal
         thumb.onclick = () => {
           const modalImg = document.getElementById('imgModalContent');
           modalImg.src = url;
           new bootstrap.Modal(document.getElementById('imgModal')).show();
         };
-      });
+      };
     });
   }
 
   // Inicial
   wirePreview(document);
-
   addBtn?.addEventListener('click', () => {
     const idx = parseInt(totalInput.value, 10);
-    const html = tmpl.innerHTML
-      .replaceAll('__prefix__', idx)
-      .replaceAll('{{ formset.prefix }}-__prefix__', '{{ formset.prefix }}-' + idx);
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = html.trim();
+    wrapper.innerHTML = tmpl.innerHTML.replace(/__prefix__/g, idx).trim();
     const node = wrapper.firstElementChild;
     container.appendChild(node);
     totalInput.value = idx + 1;
     renumerar();
     wirePreview(node);
   });
-
   renumerar();
-})();
 </script>
 {% endblock %}

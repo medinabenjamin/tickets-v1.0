@@ -208,9 +208,10 @@ body {
 }
 
 .faq-step-thumb {
-    max-width: 120px;
-    max-height: 120px;
-    cursor: pointer;
+    max-width: 260px;
+    max-height: 160px;
+    cursor: zoom-in;
+    display: block;
     object-fit: cover;
     object-position: center;
 }
