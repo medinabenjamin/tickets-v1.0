@@ -9,11 +9,16 @@
     <i class="fas fa-pen-to-square"></i> Datos de la pregunta
   </div>
 
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
     <div class="mb-3">
       <label class="form-label">Título de la pregunta</label>
+      {{ form.pregunta.errors }}
       {{ form.pregunta }}
     </div>
 
@@ -23,6 +28,7 @@
       </div>
 
       {{ formset.management_form }}
+      {{ formset.non_form_errors }}
       <div id="pasosContainer">
         {% for f in formset %}
           <div class="faq-step card border-0 p-0 mb-3" data-step-index="{{ forloop.counter0 }}">
@@ -32,6 +38,7 @@
               <span class="faq-step-badge">Paso {{ forloop.counter }}</span>
               <div class="flex-grow-1">
                 <label class="form-label mb-1">Título del paso</label>
+                {{ f.titulo.errors }}
                 {{ f.titulo }}
               </div>
               {% if f.instance.pk %}
@@ -43,11 +50,13 @@
 
             <div class="mb-2">
               <label class="form-label">Descripción</label>
+              {{ f.descripcion.errors }}
               {{ f.descripcion }}
             </div>
 
             <div class="mb-2">
               <label class="form-label">Adjuntar imagen (opcional)</label>
+              {{ f.adjunto.errors }}
               {{ f.adjunto }}
               {% if f.instance.pk and f.instance.adjunto %}
                 <div class="mt-2">
