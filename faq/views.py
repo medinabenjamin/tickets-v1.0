@@ -41,7 +41,21 @@ def faq_crear(request):
         if form.is_valid() and formset.is_valid():
             faq = form.save()
             formset.instance = faq
-            formset.save()
+            pasos_validos = []
+
+            for paso_form in formset.forms:
+                if paso_form.cleaned_data.get('DELETE'):
+                    continue
+                paso = paso_form.save(commit=False)
+                paso.faq = faq
+                pasos_validos.append(paso)
+
+            for indice, paso in enumerate(pasos_validos, start=1):
+                paso.orden = indice
+                paso.save()
+
+            for paso in formset.deleted_objects:
+                paso.delete()
             messages.success(request, 'Pregunta frecuente creada.')
             return redirect('lista_faqs')
     else:
@@ -59,7 +73,21 @@ def faq_editar(request, pk):
         formset = FAQPasoFormSet(request.POST, request.FILES, instance=faq)
         if form.is_valid() and formset.is_valid():
             form.save()
-            formset.save()
+            pasos_validos = []
+
+            for paso_form in formset.forms:
+                if paso_form.cleaned_data.get('DELETE'):
+                    continue
+                paso = paso_form.save(commit=False)
+                paso.faq = faq
+                pasos_validos.append(paso)
+
+            for indice, paso in enumerate(pasos_validos, start=1):
+                paso.orden = indice
+                paso.save()
+
+            for paso in formset.deleted_objects:
+                paso.delete()
             messages.success(request, 'Pregunta frecuente actualizada.')
             return redirect('lista_faqs')
     else:
