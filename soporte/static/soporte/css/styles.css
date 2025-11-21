@@ -199,21 +199,22 @@ body {
 }
 
 .faq-step-badge {
-    background: #0d6efd;
-    color: #fff;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.6rem;
+    display: inline-block;
+    font-weight: 600;
+    padding: .15rem .5rem;
+    border-radius: .5rem;
+    background: #e9ecef;
+    color: #495057;
+    font-size: .8rem;
     white-space: nowrap;
 }
 
 .faq-step-thumb {
     max-width: 260px;
     max-height: 160px;
+    object-fit: contain;
     cursor: zoom-in;
     display: block;
-    object-fit: cover;
-    object-position: center;
 }
 
 .thumbnail-placeholder {
