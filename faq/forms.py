@@ -18,9 +18,10 @@ class FAQForm(forms.ModelForm):
 class FAQPasoForm(forms.ModelForm):
     class Meta:
         model = FAQPaso
-        fields = ['orden', 'descripcion', 'adjunto']
+        fields = ['orden', 'titulo', 'descripcion', 'adjunto']
         widgets = {
             'orden': forms.HiddenInput(),
+            'titulo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título del paso'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describe el paso...'}),
             'adjunto': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }

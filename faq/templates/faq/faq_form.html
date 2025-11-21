@@ -1,106 +1,94 @@
 {% extends 'soporte/base.html' %}
 {% block title %}{{ modo|capfirst }} FAQ{% endblock %}
+
 {% block content %}
 <h2 class="page-title">{% if modo == 'editar' %}Editar Pregunta Frecuente{% else %}Nueva Pregunta Frecuente{% endif %}</h2>
+
 <div class="card-custom">
   <div class="card-custom-header">
     <i class="fas fa-pen-to-square"></i> Datos de la pregunta
   </div>
-  <form method="post" enctype="multipart/form-data" class="p-3">
+
+  <form method="post" enctype="multipart/form-data" id="faqForm">
     {% csrf_token %}
+
     <div class="mb-3">
       <label class="form-label">Título de la pregunta</label>
       {{ form.pregunta }}
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Respuesta</label>
-      {{ form.respuesta }}
-    </div>
-    <div class="row g-2">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Categoría</label>
-        {{ form.categoria }}
-      </div>
-      <div class="col-md-6 mb-3 d-flex align-items-center gap-2">
-        {{ form.activo }}
-        <label class="form-check-label">Activo</label>
-      </div>
     </div>
 
     <div class="card-custom mt-3">
       <div class="card-custom-header">
         <i class="fas fa-list-ol"></i> Pasos para solucionarlo (opcional)
       </div>
-      <div class="p-3">
-        {{ formset.management_form }}
-        <div id="pasos-container" class="pasos-container">
-          {% for f in formset %}
-            <div class="paso-item card-custom-light">
-              {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
-              {{ f.orden }}
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="step-label"><strong>Paso {{ forloop.counter }}</strong></span>
-                {% if f.instance.pk %}
-                  <label class="form-check-label d-flex align-items-center gap-2 mb-0">
-                    {{ f.DELETE }}
-                    <span>Eliminar este paso</span>
-                  </label>
-                {% endif %}
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Descripción</label>
-                {{ f.descripcion }}
-              </div>
-              <div class="mb-2">
-                <label class="form-label">Adjuntar imagen (opcional)</label>
-                <div class="d-flex gap-3 flex-wrap align-items-center">
-                  <div class="thumbnail-wrapper">
-                    {% if f.instance.adjunto %}
-                      <img src="{{ f.instance.adjunto.url }}" alt="Adjunto del paso" class="paso-thumbnail">
-                    {% else %}
-                      <div class="thumbnail-placeholder text-muted">Sin imagen</div>
-                    {% endif %}
-                  </div>
-                  <div class="flex-grow-1">
-                    {{ f.adjunto }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-        <button type="button" class="btn btn-outline-primary mt-2" id="agregar-paso"><i class="fas fa-plus"></i> Agregar paso</button>
 
-        <template id="empty-form-template">
-          <div class="paso-item card-custom-light">
-            {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
-            {{ formset.empty_form.orden }}
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="step-label"><strong>Paso __number__</strong></span>
+      {{ formset.management_form }}
+      <div id="pasosContainer">
+        {% for f in formset %}
+          <div class="faq-step card border-0 p-0 mb-3" data-step-index="{{ forloop.counter0 }}">
+            {{ f.orden }} {# hidden #}
+
+            <div class="d-flex align-items-center mb-2 gap-2">
+              <span class="faq-step-badge">Paso {{ forloop.counter }}</span>
+              <div class="flex-grow-1">
+                <label class="form-label mb-1">Título del paso</label>
+                {{ f.titulo }}
+              </div>
+              {% if f.instance.pk %}
+                <div class="form-check ms-2">
+                  {{ f.DELETE }} <label class="form-check-label small">Eliminar</label>
+                </div>
+              {% endif %}
             </div>
-            <div class="mb-3">
+
+            <div class="mb-2">
               <label class="form-label">Descripción</label>
-              {{ formset.empty_form.descripcion }}
+              {{ f.descripcion }}
             </div>
+
             <div class="mb-2">
               <label class="form-label">Adjuntar imagen (opcional)</label>
-              <div class="d-flex gap-3 flex-wrap align-items-center">
-                <div class="thumbnail-wrapper">
-                  <div class="thumbnail-placeholder text-muted">Sin imagen</div>
+              {{ f.adjunto }}
+              {% if f.instance.pk and f.instance.adjunto %}
+                <div class="mt-2">
+                  <img src="{{ f.instance.adjunto.url }}" class="faq-step-thumb img-thumbnail"
+                       alt="Adjunto del paso"
+                       data-enlarge-src="{{ f.instance.adjunto.url }}">
                 </div>
-                <div class="flex-grow-1">
-                  {{ formset.empty_form.adjunto }}
-                </div>
-              </div>
+              {% endif %}
+            </div>
+            <hr>
+          </div>
+        {% endfor %}
+      </div>
+
+      {# plantilla para clonar un nuevo paso #}
+      <template id="emptyStepTemplate">
+        <div class="faq-step card border-0 p-0 mb-3" data-step-index="__prefix__">
+          {{ formset.empty_form.orden }}
+          <div class="d-flex align-items-center mb-2 gap-2">
+            <span class="faq-step-badge">Paso X</span>
+            <div class="flex-grow-1">
+              <label class="form-label mb-1">Título del paso</label>
+              {{ formset.empty_form.titulo }}
             </div>
           </div>
-        </template>
-      </div>
-    </div>
+          <div class="mb-2">
+            <label class="form-label">Descripción</label>
+            {{ formset.empty_form.descripcion }}
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Adjuntar imagen (opcional)</label>
+            {{ formset.empty_form.adjunto }}
+          </div>
+          <hr>
+        </div>
+      </template>
 
-    <div class="modal-overlay" id="image-modal" style="display: none;">
-      <div class="modal-content">
-        <img src="" alt="Vista previa de adjunto" id="modal-image">
+      <div class="d-flex">
+        <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" id="addStepBtn">
+          Agregar paso
+        </button>
       </div>
     </div>
 
@@ -110,104 +98,88 @@
     </div>
   </form>
 </div>
+
+{# Modal para ampliar imagen #}
+<div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <img id="imgModalContent" alt="Vista ampliada" />
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-  const pasosContainer = document.getElementById('pasos-container');
-  const agregarPasoBtn = document.getElementById('agregar-paso');
-  const emptyFormTemplate = document.getElementById('empty-form-template');
-  const totalFormsInput = document.getElementById('id_faqpaso_set-TOTAL_FORMS');
-  const imageModal = document.getElementById('image-modal');
-  const modalImage = document.getElementById('modal-image');
+(function() {
+  const container = document.getElementById('pasosContainer');
+  const addBtn = document.getElementById('addStepBtn');
+  const tmpl = document.getElementById('emptyStepTemplate');
+  const totalInput = document.querySelector('[name="{{ formset.prefix }}-TOTAL_FORMS"]');
 
-  const updateStepLabels = () => {
-    pasosContainer.querySelectorAll('.paso-item').forEach((item, index) => {
-      const label = item.querySelector('.step-label');
-      if (label) {
-        label.innerHTML = `<strong>Paso ${index + 1}</strong>`;
-      }
-      const ordenInput = item.querySelector('input[name$="-orden"]');
-      if (ordenInput) {
-        ordenInput.value = index + 1;
-      }
+  function renumerar() {
+    const steps = container.querySelectorAll('.faq-step');
+    steps.forEach((node, idx) => {
+      const badge = node.querySelector('.faq-step-badge');
+      if (badge) badge.textContent = 'Paso ' + (idx + 1);
+      const ordenInput = node.querySelector('input[name$="-orden"]');
+      if (ordenInput) ordenInput.value = (idx + 1);
     });
-  };
+  }
 
-  const bindImagePreview = (context) => {
-    const fileInput = context.querySelector('input[type="file"]');
-    const thumbnailWrapper = context.querySelector('.thumbnail-wrapper');
-
-    const renderPreview = (src) => {
-      let img = thumbnailWrapper.querySelector('img.paso-thumbnail');
-      if (src) {
-        if (!img) {
-          img = document.createElement('img');
-          img.classList.add('paso-thumbnail');
-          img.alt = 'Adjunto del paso';
-          thumbnailWrapper.innerHTML = '';
-          thumbnailWrapper.appendChild(img);
-        }
-        img.src = src;
-        img.addEventListener('click', () => openModal(src));
-      } else {
-        thumbnailWrapper.innerHTML = '<div class="thumbnail-placeholder text-muted">Sin imagen</div>';
-      }
-    };
-
-    if (fileInput) {
-      fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          renderPreview(URL.createObjectURL(file));
-        } else {
-          renderPreview(null);
-        }
+  function wirePreview(scope) {
+    // miniatura existente -> modal
+    scope.querySelectorAll('img.faq-step-thumb').forEach(img => {
+      img.addEventListener('click', () => {
+        const src = img.getAttribute('data-enlarge-src') || img.src;
+        const modalImg = document.getElementById('imgModalContent');
+        modalImg.src = src;
+        new bootstrap.Modal(document.getElementById('imgModal')).show();
       });
-    }
+    });
 
-    const existingImg = thumbnailWrapper.querySelector('img.paso-thumbnail');
-    if (existingImg) {
-      existingImg.addEventListener('click', () => openModal(existingImg.src));
-    }
-  };
+    // inputs file -> miniatura única (no duplicar)
+    scope.querySelectorAll('input[type="file"]').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f || !f.type.startsWith('image/')) return;
+        let thumb = input.closest('.mb-2').querySelector('img.faq-step-thumb');
+        if (!thumb) {
+          thumb = document.createElement('img');
+          thumb.className = 'faq-step-thumb img-thumbnail mt-2';
+          input.closest('.mb-2').appendChild(thumb);
+        }
+        const url = URL.createObjectURL(f);
+        thumb.src = url;
+        thumb.setAttribute('data-enlarge-src', url);
+        // click para modal
+        thumb.onclick = () => {
+          const modalImg = document.getElementById('imgModalContent');
+          modalImg.src = url;
+          new bootstrap.Modal(document.getElementById('imgModal')).show();
+        };
+      });
+    });
+  }
 
-  const openModal = (src) => {
-    if (!imageModal || !modalImage) return;
-    modalImage.src = src;
-    imageModal.style.display = 'flex';
-  };
+  // Inicial
+  wirePreview(document);
 
-  const closeModal = () => {
-    if (!imageModal || !modalImage) return;
-    modalImage.src = '';
-    imageModal.style.display = 'none';
-  };
-
-  imageModal?.addEventListener('click', (event) => {
-    if (event.target === imageModal) {
-      closeModal();
-    }
-  });
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && imageModal?.style.display === 'flex') {
-      closeModal();
-    }
-  });
-
-  const addPasoForm = () => {
-    const totalForms = parseInt(totalFormsInput.value, 10);
-    const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, totalForms).replace(/__number__/g, totalForms + 1);
+  addBtn?.addEventListener('click', () => {
+    const idx = parseInt(totalInput.value, 10);
+    const html = tmpl.innerHTML
+      .replaceAll('__prefix__', idx)
+      .replaceAll('{{ formset.prefix }}-__prefix__', '{{ formset.prefix }}-' + idx);
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = newFormHtml.trim();
-    const newForm = wrapper.firstElementChild;
-    pasosContainer.appendChild(newForm);
-    totalFormsInput.value = totalForms + 1;
-    bindImagePreview(newForm);
-    updateStepLabels();
-  };
+    wrapper.innerHTML = html.trim();
+    const node = wrapper.firstElementChild;
+    container.appendChild(node);
+    totalInput.value = idx + 1;
+    renumerar();
+    wirePreview(node);
+  });
 
-  agregarPasoBtn?.addEventListener('click', addPasoForm);
-
-  pasosContainer.querySelectorAll('.paso-item').forEach((item) => bindImagePreview(item));
-  updateStepLabels();
+  renumerar();
+})();
 </script>
 {% endblock %}
