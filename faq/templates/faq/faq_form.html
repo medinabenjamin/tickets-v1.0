@@ -85,10 +85,9 @@
         </div>
       </template>
 
-      <div class="d-flex">
-        <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" id="addStepBtn">
-          Agregar paso
-        </button>
+      <div class="d-flex gap-2 justify-content-end">
+        <button type="button" class="btn btn-outline-danger btn-sm" id="removeStepBtn" disabled>Eliminar paso</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="addStepBtn">Agregar paso</button>
       </div>
     </div>
 
@@ -113,17 +112,27 @@
 <script>
   const container   = document.getElementById('pasosContainer');
   const addBtn      = document.getElementById('addStepBtn');
+  const removeBtn   = document.getElementById('removeStepBtn');
   const tmpl        = document.getElementById('emptyStepTemplate');
   const totalInput  = document.querySelector('[name="{{ formset.prefix }}-TOTAL_FORMS"]');
 
+  function getVisibleSteps() {
+    return Array.from(container.querySelectorAll('.faq-step')).filter(step => !step.classList.contains('d-none'));
+  }
+
+  function updateRemoveState() {
+    removeBtn.disabled = getVisibleSteps().length <= 1;
+  }
+
   function renumerar() {
-    const steps = container.querySelectorAll('.faq-step');
+    const steps = getVisibleSteps();
     steps.forEach((node, i) => {
       const badge = node.querySelector('.faq-step-badge');
       if (badge) badge.textContent = 'Paso ' + (i + 1);
       const ordenInput = node.querySelector('input[name$="-orden"]');
       if (ordenInput) ordenInput.value = (i + 1);
     });
+    updateRemoveState();
   }
 
   function wirePreview(scope) {
@@ -170,7 +179,28 @@
     totalInput.value = idx + 1;
     renumerar();
     wirePreview(node);
+    updateRemoveState();
+  });
+
+  removeBtn?.addEventListener('click', () => {
+    const steps = getVisibleSteps();
+    if (steps.length <= 1) return;
+    const last = steps[steps.length - 1];
+    const deleteCheckbox = last.querySelector('input[type="checkbox"][name$="-DELETE"]');
+
+    if (deleteCheckbox) {
+      deleteCheckbox.checked = true;
+      last.classList.add('d-none');
+      last.setAttribute('aria-hidden', 'true');
+    } else {
+      last.remove();
+      const currentTotal = Math.max(0, parseInt(totalInput.value, 10) - 1);
+      totalInput.value = currentTotal;
+    }
+
+    renumerar();
   });
   renumerar();
+  updateRemoveState();
 </script>
 {% endblock %}
