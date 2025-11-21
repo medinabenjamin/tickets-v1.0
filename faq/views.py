@@ -16,14 +16,17 @@ def is_staff(user):
 def lista_faqs(request):
     search_query = request.GET.get('q', '')
 
-    faqs_queryset = FAQ.objects.all() if request.user.is_staff else FAQ.objects.filter(activo=True)
+    if request.user.is_staff:
+        faqs_queryset = FAQ.objects.all()
+    else:
+        faqs_queryset = FAQ.objects.filter(activo=True)
 
     if search_query:
         faqs_queryset = faqs_queryset.filter(
             Q(pregunta__icontains=search_query) | Q(respuesta__icontains=search_query)
         )
 
-    faqs = faqs_queryset.order_by('categoria', 'pregunta').prefetch_related('pasos')
+    faqs = faqs_queryset.order_by('id').prefetch_related('pasos')
 
     context = {
         'faqs': faqs,
