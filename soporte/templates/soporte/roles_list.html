@@ -1,13 +1,14 @@
 {% extends 'soporte/base.html' %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}Roles & Permisos{% endblock %}
+{% block title %}Roles y permisos{% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-4">
     <div class="d-flex align-items-center mb-2">
         <div>
-            <h2 class="page-title mb-0">Roles &amp; Permisos</h2>
+            <h2 class="page-title mb-0">Roles y permisos</h2>
             <p class="page-subtitle">Administra roles basados en permisos</p>
         </div>
         <div class="ms-auto">
@@ -40,18 +41,33 @@
             <table class="table table-hover align-middle mb-0 table-custom">
                 <thead class="table-light">
                     <tr>
-                        <th>Rol</th>
-                        <th class="text-center"># Usuarios</th>
+                        <th>Nombre del rol</th>
+                        <th>Descripción del rol</th>
+                        <th class="text-center">Usuarios asignados</th>
                         <th class="text-center">Permisos</th>
-                        <th class="text-end" style="width: 160px;">Acciones</th>
+                        <th class="text-end" style="width: 180px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for rol in page_obj.object_list %}
                     <tr>
                         <td class="fw-semibold">{{ rol.name }}</td>
-                        <td class="text-center"><span class="badge bg-light text-dark border">{{ rol.total_usuarios }}</span></td>
-                        <td class="text-center"><span class="badge bg-secondary">{{ rol.permissions.count }}</span></td>
+                        <td>
+                            {% with descripcion=rol.info.descripcion|default:'' %}
+                                {% if descripcion %}
+                                    <span title="{{ descripcion }}">{{ descripcion|truncatechars:120 }}</span>
+                                {% else %}
+                                    <span class="text-muted">Sin descripción</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="text-center"><span class="badge bg-light text-dark border">{{ rol.num_users }}</span></td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                <span class="badge bg-secondary">{{ rol.num_perms }}</span>
+                                <a href="{% url 'rol_editar' rol.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            </div>
+                        </td>
                         <td class="text-end">
                             <div class="btn-group" role="group">
                                 <a href="{% url 'rol_editar' rol.id %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fas fa-edit"></i></a>
@@ -61,7 +77,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center py-4 text-muted">No se encontraron roles.</td>
+                        <td colspan="5" class="text-center py-4 text-muted">No se encontraron roles.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -1,33 +1,58 @@
 # soporte/views.py
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import logout, update_session_auth_hash
-from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib import messages # <--- IMPORTACIÓN AÑADIDA
-from django.db.models import Avg, Count, Max, ProtectedError, Q
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib.auth.models import Group, Permission, User
-from django.core.paginator import Paginator
-from django.http import HttpResponse, HttpResponseForbidden
 import csv
-from .models import Ticket, Comment, Adjunto, Prioridad
+import logging
+from collections import defaultdict
+
+from django.conf import settings
+from django.contrib import messages # <--- IMPORTACIÓN AÑADIDA
+from django.contrib.auth import logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.models import Group, Permission, User
+from django.core.mail import send_mail
+from django.core.paginator import Paginator
+from django.db.models import Avg, Count, Max, ProtectedError, Q
+from django.http import HttpResponse, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+
 from .forms import (
-    TicketForm,
     CommentForm,
+    PrioridadForm,
+    RoleForm,
     TechTicketForm,
+    TicketForm,
     UserCreateForm,
     UserUpdateForm,
-    PrioridadForm,
 )
-import logging
+from .models import Adjunto, Comment, Prioridad, Ticket
+from .utils.permissions import (
+    get_app_verbose_name,
+    spanish_permission_label,
+)
 
 # Importaciones para PDF
 from django.template.loader import get_template
 
 # Configura el logger para la aplicación
 logger = logging.getLogger(__name__)
+
+
+def agrupar_permisos_en_espanol(permisos_qs, permisos_seleccionados):
+    permisos_por_app = defaultdict(list)
+    for permiso in permisos_qs:
+        app_verbose = get_app_verbose_name(permiso.content_type.app_label)
+        etiqueta = spanish_permission_label(permiso)
+        permisos_por_app[app_verbose].append(
+            (permiso.id, etiqueta, permiso.id in permisos_seleccionados)
+        )
+
+    permisos_agrupados = {}
+    for app_name in sorted(permisos_por_app.keys()):
+        permisos_agrupados[app_name] = sorted(
+            permisos_por_app[app_name], key=lambda x: x[1]
+        )
+    return permisos_agrupados
 
 # --- FUNCIONES AUXILIARES ---
 def enviar_notificacion_correo(subject, message, recipient_list):
@@ -520,7 +545,14 @@ def eliminar_usuario(request, user_id):
 @user_passes_test(lambda u: u.is_staff)
 def roles_list(request):
     query = request.GET.get('q', '').strip()
-    roles_qs = Group.objects.annotate(total_usuarios=Count('user')).order_by('name')
+    roles_qs = (
+        Group.objects.annotate(
+            num_users=Count('user', distinct=True),
+            num_perms=Count('permissions', distinct=True),
+        )
+        .select_related('info')
+        .order_by('name')
+    )
     if query:
         roles_qs = roles_qs.filter(name__icontains=query)
 
@@ -552,26 +584,25 @@ def roles_list(request):
 @login_required
 @user_passes_test(lambda u: u.is_staff)
 def rol_crear(request):
-    permisos = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
-    permisos_agrupados = {}
-    for perm in permisos:
-        permisos_agrupados.setdefault(perm.content_type.app_label, []).append(perm)
-
+    permisos = Permission.objects.select_related('content_type').all()
+    permisos_seleccionados = set()
     if request.method == 'POST':
-        nombre = request.POST.get('name', '').strip()
-        if not nombre:
-            messages.error(request, 'El nombre del rol es obligatorio.')
-        else:
-            grupo = Group.objects.create(name=nombre)
-            seleccionados = request.POST.getlist('permissions')
-            grupo.permissions.set(seleccionados)
+        permisos_seleccionados = set(map(int, request.POST.getlist('permissions')))
+        form = RoleForm(request.POST)
+        if form.is_valid():
+            grupo = form.save()
+            grupo.permissions.set(permisos_seleccionados)
             messages.success(request, 'Rol creado correctamente.')
             return redirect('roles_list')
+    else:
+        form = RoleForm()
+
+    permisos_agrupados = agrupar_permisos_en_espanol(permisos, permisos_seleccionados)
 
     context = {
+        'form': form,
         'permisos_agrupados': permisos_agrupados,
-        'titulo': 'Crear rol',
-        'permisos_actuales': set(),
+        'titulo': 'Nuevo rol',
     }
     return render(request, 'soporte/rol_form.html', context)
 
@@ -580,29 +611,26 @@ def rol_crear(request):
 @user_passes_test(lambda u: u.is_staff)
 def rol_editar(request, pk):
     grupo = get_object_or_404(Group, pk=pk)
-    permisos = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
-    permisos_agrupados = {}
-    for perm in permisos:
-        permisos_agrupados.setdefault(perm.content_type.app_label, []).append(perm)
-
+    permisos = Permission.objects.select_related('content_type').all()
     permisos_actuales = set(grupo.permissions.values_list('id', flat=True))
 
     if request.method == 'POST':
-        nombre = request.POST.get('name', '').strip()
-        if not nombre:
-            messages.error(request, 'El nombre del rol es obligatorio.')
-        else:
-            grupo.name = nombre
-            grupo.save()
-            seleccionados = request.POST.getlist('permissions')
-            grupo.permissions.set(seleccionados)
+        permisos_actuales = set(map(int, request.POST.getlist('permissions')))
+        form = RoleForm(request.POST, instance=grupo)
+        if form.is_valid():
+            grupo = form.save()
+            grupo.permissions.set(permisos_actuales)
             messages.success(request, 'Rol actualizado correctamente.')
             return redirect('roles_list')
+    else:
+        form = RoleForm(instance=grupo)
+
+    permisos_agrupados = agrupar_permisos_en_espanol(permisos, permisos_actuales)
 
     context = {
+        'form': form,
         'grupo': grupo,
         'permisos_agrupados': permisos_agrupados,
-        'permisos_actuales': permisos_actuales,
         'titulo': 'Editar rol',
     }
     return render(request, 'soporte/rol_form.html', context)
@@ -615,9 +643,8 @@ def rol_eliminar(request, pk):
     usuarios_asociados = grupo.user_set.count()
 
     if request.method == 'POST':
-        nombre = grupo.name
         grupo.delete()
-        messages.success(request, f"Rol '{nombre}' eliminado correctamente.")
+        messages.success(request, 'Rol eliminado correctamente.')
         return redirect('roles_list')
 
     context = {

@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import Group, User
 from django.utils.text import slugify
 
-from .models import Adjunto, Comment, Prioridad, Ticket
+from .models import Adjunto, Comment, Prioridad, RoleInfo, Ticket
 
 
 class TicketForm(forms.ModelForm):
@@ -123,6 +123,37 @@ class PrioridadForm(forms.ModelForm):
         if not clave:
             raise forms.ValidationError("Ingresa un identificador válido.")
         return clave
+
+
+class RoleForm(forms.ModelForm):
+    descripcion = forms.CharField(
+        label="Descripción del rol",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
+    )
+
+    class Meta:
+        model = Group
+        fields = ["name"]
+        labels = {"name": "Nombre del rol"}
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        info = getattr(self.instance, "info", None)
+        if info:
+            self.fields["descripcion"].initial = info.descripcion
+
+    def save(self, commit=True):
+        group = super().save(commit=commit)
+        descripcion = self.cleaned_data.get("descripcion", "")
+        if commit:
+            info, _ = RoleInfo.objects.get_or_create(group=group)
+            info.descripcion = descripcion
+            info.save()
+        return group
 
 
 class CommentForm(forms.ModelForm):
