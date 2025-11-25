@@ -120,6 +120,24 @@ body {
     outline-offset: 4px;
 }
 
+.card-hover {
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+}
+
+.border-left-primary { border-left: .25rem solid #0d6efd; }
+.border-left-danger { border-left: .25rem solid #dc3545; }
+.border-left-warning { border-left: .25rem solid #f6c23e; }
+.border-left-success { border-left: .25rem solid #198754; }
+
+.text-gray-800 { color: #5a5c69 !important; }
+.text-gray-300 { color: #d1d3e2 !important; }
+.text-xs { font-size: .75rem; }
+
 .stat-card {
     position: relative;
     display: flex;
