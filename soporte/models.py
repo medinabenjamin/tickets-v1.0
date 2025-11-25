@@ -2,8 +2,10 @@
 import os
 from datetime import timedelta
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils import timezone
 
 
@@ -287,3 +289,28 @@ class Adjunto(models.Model):
     def is_image(self):
         image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
         return any(self.archivo.name.lower().endswith(ext) for ext in image_extensions)
+
+
+class RoleInfo(models.Model):
+    group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        related_name='info',
+        verbose_name='Rol',
+    )
+    descripcion = models.TextField(blank=True, default='', verbose_name='Descripción del rol')
+
+    class Meta:
+        verbose_name = 'Información de rol'
+        verbose_name_plural = 'Información de roles'
+
+    def __str__(self):
+        return f"Información de {self.group.name}"
+
+
+@receiver(post_save, sender=Group)
+def crear_roleinfo_si_no_existe(sender, instance, created, **kwargs):
+    if created:
+        RoleInfo.objects.create(group=instance)
+    else:
+        RoleInfo.objects.get_or_create(group=instance)
