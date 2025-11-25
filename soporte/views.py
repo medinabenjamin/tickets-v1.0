@@ -8,7 +8,8 @@ from django.contrib import messages # <--- IMPORTACIÓN AÑADIDA
 from django.db.models import Avg, Count, Max, ProtectedError, Q
 from django.core.mail import send_mail
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, Permission, User
+from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpResponseForbidden
 import csv
 from .models import Ticket, Comment, Adjunto, Prioridad
@@ -19,12 +20,6 @@ from .forms import (
     UserCreateForm,
     UserUpdateForm,
     PrioridadForm,
-)
-from .roles import (
-    ROLE_DEFINITIONS,
-    get_role_badge_class,
-    get_role_label,
-    get_user_role,
 )
 import logging
 
@@ -41,10 +36,6 @@ def enviar_notificacion_correo(subject, message, recipient_list):
         logger.info(f"Correo enviado exitosamente a: {recipient_list}")
     except Exception as e:
         logger.error(f"Error al enviar el correo: {e}")
-
-def es_superusuario(user):
-    return user.is_superuser
-
 
 def es_personal_sla(user):
     return user.is_staff
@@ -388,29 +379,84 @@ def eliminar_prioridad_sla(request, prioridad_id):
 # --- VISTAS DE MANTENEDOR (¡ACTUALIZADAS!) ---
 
 @login_required
-@user_passes_test(es_superusuario)
+@user_passes_test(lambda u: u.is_staff)
 def mantenedor_usuarios(request):
-    """Muestra el listado de usuarios y sus acciones disponibles."""
+    """Listado de usuarios con filtros, ordenamiento y paginación."""
+
+    query = request.GET.get('q', '').strip()
+    role_filter = request.GET.get('role') or ''
+    is_active_param = request.GET.get('is_active')
+    order = request.GET.get('order', '-date_joined')
+
+    allowed_orders = {
+        'username', '-username', 'email', '-email',
+        'date_joined', '-date_joined', 'last_login', '-last_login',
+    }
+    if order not in allowed_orders:
+        order = '-date_joined'
 
     usuarios_qs = (
-        User.objects.all()
-        .order_by('-is_active', 'username')
+        User.objects.select_related()
         .prefetch_related('groups')
+        .order_by(order)
     )
-    usuarios = list(usuarios_qs)
-    for usuario in usuarios:
-        role_key = get_user_role(usuario)
-        usuario.role_key = role_key
-        usuario.role_label = get_role_label(role_key)
-        usuario.role_badge = get_role_badge_class(role_key)
+
+    if query:
+        usuarios_qs = usuarios_qs.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
+        )
+
+    if role_filter:
+        usuarios_qs = usuarios_qs.filter(groups__name=role_filter)
+
+    if is_active_param in ('0', '1'):
+        usuarios_qs = usuarios_qs.filter(is_active=bool(int(is_active_param)))
+
+    paginator = Paginator(usuarios_qs, 15)
+    try:
+        page_number = int(request.GET.get('page', 1))
+    except (TypeError, ValueError):
+        page_number = 1
+    page_obj = paginator.get_page(page_number)
+
+    start_index = (page_obj.number - 1) * paginator.per_page + 1 if paginator.count else 0
+    end_index = start_index + len(page_obj.object_list) - 1 if paginator.count else 0
+
+    base_querydict = request.GET.copy()
+    if 'page' in base_querydict:
+        base_querydict.pop('page')
+    base_query = base_querydict.urlencode()
+
+    order_toggles = {}
+    for field in ['username', 'email', 'date_joined', 'last_login']:
+        if order == field:
+            order_toggles[field] = f'-{field}'
+        elif order == f'-{field}':
+            order_toggles[field] = field
+        else:
+            order_toggles[field] = field
+
     context = {
-        'usuarios': usuarios,
+        'page_obj': page_obj,
+        'total': paginator.count,
+        'query': query,
+        'role_filter': role_filter,
+        'is_active_filter': is_active_param,
+        'order': order,
+        'order_toggles': order_toggles,
+        'roles_disponibles': Group.objects.order_by('name').values_list('name', flat=True),
+        'start_index': start_index,
+        'end_index': end_index,
+        'base_query': base_query,
     }
     return render(request, 'soporte/usuarios_list.html', context)
 
 
 @login_required
-@user_passes_test(es_superusuario)
+@user_passes_test(lambda u: u.is_staff)
 def crear_usuario(request):
     """Renderiza el formulario de creación de usuarios y procesa el guardado."""
 
@@ -425,13 +471,13 @@ def crear_usuario(request):
 
     context = {
         'form': form,
-        'role_definitions': ROLE_DEFINITIONS,
+        'is_edit': False,
     }
-    return render(request, 'soporte/usuarios_crear.html', context)
+    return render(request, 'soporte/usuario_form.html', context)
 
 
 @login_required
-@user_passes_test(es_superusuario)
+@user_passes_test(lambda u: u.is_staff)
 def editar_usuario(request, user_id):
     usuario = get_object_or_404(User, id=user_id)
     if request.method == 'POST':
@@ -448,12 +494,13 @@ def editar_usuario(request, user_id):
     context = {
         'form': form,
         'usuario': usuario,
+        'is_edit': True,
     }
-    return render(request, 'soporte/editar_usuario.html', context)
+    return render(request, 'soporte/usuario_form.html', context)
 
 
 @login_required
-@user_passes_test(es_superusuario)
+@user_passes_test(lambda u: u.is_staff)
 def eliminar_usuario(request, user_id):
     usuario = get_object_or_404(User, id=user_id)
     if request.method == 'POST':
@@ -467,6 +514,117 @@ def eliminar_usuario(request, user_id):
 
     context = {'usuario': usuario}
     return render(request, 'soporte/confirmar_eliminar_usuario.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def roles_list(request):
+    query = request.GET.get('q', '').strip()
+    roles_qs = Group.objects.annotate(total_usuarios=Count('user')).order_by('name')
+    if query:
+        roles_qs = roles_qs.filter(name__icontains=query)
+
+    paginator = Paginator(roles_qs, 15)
+    try:
+        page_number = int(request.GET.get('page', 1))
+    except (TypeError, ValueError):
+        page_number = 1
+    page_obj = paginator.get_page(page_number)
+
+    base_querydict = request.GET.copy()
+    if 'page' in base_querydict:
+        base_querydict.pop('page')
+    base_query = base_querydict.urlencode()
+
+    start_index = page_obj.start_index() if paginator.count else 0
+    end_index = page_obj.end_index() if paginator.count else 0
+
+    context = {
+        'page_obj': page_obj,
+        'query': query,
+        'base_query': base_query,
+        'start_index': start_index,
+        'end_index': end_index,
+    }
+    return render(request, 'soporte/roles_list.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def rol_crear(request):
+    permisos = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
+    permisos_agrupados = {}
+    for perm in permisos:
+        permisos_agrupados.setdefault(perm.content_type.app_label, []).append(perm)
+
+    if request.method == 'POST':
+        nombre = request.POST.get('name', '').strip()
+        if not nombre:
+            messages.error(request, 'El nombre del rol es obligatorio.')
+        else:
+            grupo = Group.objects.create(name=nombre)
+            seleccionados = request.POST.getlist('permissions')
+            grupo.permissions.set(seleccionados)
+            messages.success(request, 'Rol creado correctamente.')
+            return redirect('roles_list')
+
+    context = {
+        'permisos_agrupados': permisos_agrupados,
+        'titulo': 'Crear rol',
+        'permisos_actuales': set(),
+    }
+    return render(request, 'soporte/rol_form.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def rol_editar(request, pk):
+    grupo = get_object_or_404(Group, pk=pk)
+    permisos = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
+    permisos_agrupados = {}
+    for perm in permisos:
+        permisos_agrupados.setdefault(perm.content_type.app_label, []).append(perm)
+
+    permisos_actuales = set(grupo.permissions.values_list('id', flat=True))
+
+    if request.method == 'POST':
+        nombre = request.POST.get('name', '').strip()
+        if not nombre:
+            messages.error(request, 'El nombre del rol es obligatorio.')
+        else:
+            grupo.name = nombre
+            grupo.save()
+            seleccionados = request.POST.getlist('permissions')
+            grupo.permissions.set(seleccionados)
+            messages.success(request, 'Rol actualizado correctamente.')
+            return redirect('roles_list')
+
+    context = {
+        'grupo': grupo,
+        'permisos_agrupados': permisos_agrupados,
+        'permisos_actuales': permisos_actuales,
+        'titulo': 'Editar rol',
+    }
+    return render(request, 'soporte/rol_form.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def rol_eliminar(request, pk):
+    grupo = get_object_or_404(Group, pk=pk)
+    usuarios_asociados = grupo.user_set.count()
+
+    if request.method == 'POST':
+        nombre = grupo.name
+        grupo.delete()
+        messages.success(request, f"Rol '{nombre}' eliminado correctamente.")
+        return redirect('roles_list')
+
+    context = {
+        'grupo': grupo,
+        'usuarios_asociados': usuarios_asociados,
+    }
+    return render(request, 'soporte/rol_confirm_delete.html', context)
 
 
 # --- VISTAS DE EXPORTACIÓN ---

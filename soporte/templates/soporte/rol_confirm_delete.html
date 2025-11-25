@@ -1,0 +1,26 @@
+{% extends 'soporte/base.html' %}
+
+{% block title %}Eliminar rol{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex align-items-center mb-2">
+        <div>
+            <h2 class="page-title mb-0">Eliminar rol</h2>
+            <p class="page-subtitle">Confirma la eliminación del rol seleccionado</p>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <div class="card-custom-header"><i class="fas fa-exclamation-triangle me-2"></i>Confirmación</div>
+        <div class="card-body">
+            <p>¿Seguro que deseas eliminar el rol <strong>{{ grupo.name }}</strong>? Este rol está asignado a <strong>{{ usuarios_asociados }}</strong> usuario(s).</p>
+            <form method="post" class="d-flex gap-2">
+                {% csrf_token %}
+                <a href="{% url 'roles_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

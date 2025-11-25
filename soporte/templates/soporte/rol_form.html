@@ -1,0 +1,83 @@
+{% extends 'soporte/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex align-items-center mb-2">
+        <div>
+            <h2 class="page-title mb-0">{{ titulo }}</h2>
+            <p class="page-subtitle">Administra permisos asignados a cada rol</p>
+        </div>
+        <div class="ms-auto">
+            <a href="{% url 'roles_list' %}" class="btn btn-outline-secondary btn-sm">Volver</a>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <div class="card-custom-header"><i class="fas fa-user-shield me-2"></i>Datos del rol</div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label" for="name">Nombre del rol</label>
+                    <input type="text" name="name" id="name" class="form-control" value="{{ grupo.name|default:'' }}" required>
+                </div>
+
+                <div class="accordion" id="permisosAccordion">
+                    {% for app_label, permisos in permisos_agrupados.items %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-{{ app_label }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ app_label }}" aria-expanded="false" aria-controls="collapse-{{ app_label }}">
+                                {{ app_label|capfirst }}
+                            </button>
+                        </h2>
+                        <div id="collapse-{{ app_label }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ app_label }}" data-bs-parent="#permisosAccordion">
+                            <div class="accordion-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold">Permisos disponibles</span>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-secondary toggle-app" data-action="select" data-target="{{ app_label }}">Seleccionar todo</button>
+                                        <button type="button" class="btn btn-outline-secondary toggle-app" data-action="clear" data-target="{{ app_label }}">Quitar todo</button>
+                                    </div>
+                                </div>
+                                <div class="row row-cols-1 row-cols-md-2 g-2">
+                                    {% for perm in permisos %}
+                                    <div class="col">
+                                        <div class="form-check">
+                                            <input class="form-check-input permiso-checkbox permiso-{{ app_label }}" type="checkbox" name="permissions" value="{{ perm.id }}" id="perm-{{ perm.id }}" {% if permisos_actuales and perm.id in permisos_actuales %}checked{% endif %}>
+                                            <label class="form-check-label" for="perm-{{ perm.id }}">{{ perm.name }}</label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="{% url 'roles_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-dark">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.toggle-app').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.target;
+                const action = btn.dataset.action;
+                document.querySelectorAll(`.permiso-${target}`).forEach(chk => {
+                    chk.checked = action === 'select';
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

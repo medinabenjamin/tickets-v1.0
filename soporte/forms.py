@@ -1,15 +1,10 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UsernameField
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.utils.text import slugify
 
 from .models import Adjunto, Comment, Prioridad, Ticket
-from .roles import (
-    ROLE_CHOICES,
-    assign_role_to_user,
-    get_user_role,
-)
 
 
 class TicketForm(forms.ModelForm):
@@ -157,16 +152,17 @@ class UserCreateForm(forms.ModelForm):
         widget=forms.PasswordInput,
         label="Confirmar contraseña",
     )
-    role = forms.ChoiceField(
-        choices=ROLE_CHOICES,
-        label="Rol del usuario",
-        initial="solicitante",
-        help_text="Define los permisos que el usuario heredará automáticamente.",
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all().order_by("name"),
+        required=False,
+        label="Roles",
+        help_text="Selecciona uno o más roles para el usuario.",
+        widget=forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
     )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'is_active']
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'groups']
         field_classes = {'username': UsernameField}
         labels = {
             'username': 'Nombre de usuario',
@@ -193,7 +189,9 @@ class UserCreateForm(forms.ModelForm):
         user.set_password(self.cleaned_data['password'])
         if commit:
             user.save()
-            assign_role_to_user(user, self.cleaned_data['role'])
+            groups = self.cleaned_data.get('groups')
+            if groups is not None:
+                user.groups.set(groups)
         return user
 
 
@@ -211,15 +209,17 @@ class UserUpdateForm(forms.ModelForm):
         label="Confirmar contraseña",
         required=False,
     )
-    role = forms.ChoiceField(
-        choices=ROLE_CHOICES,
-        label="Rol del usuario",
-        help_text="Actualiza los permisos heredados asignando un rol diferente.",
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all().order_by("name"),
+        required=False,
+        label="Roles",
+        help_text="Asigna uno o más roles al usuario.",
+        widget=forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
     )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'is_active']
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'groups']
         field_classes = {'username': UsernameField}
         labels = {
             'username': 'Nombre de usuario',
@@ -232,7 +232,7 @@ class UserUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            self.fields['role'].initial = get_user_role(self.instance)
+            self.fields['groups'].initial = self.instance.groups.all()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -250,5 +250,7 @@ class UserUpdateForm(forms.ModelForm):
             user.set_password(password)
         if commit:
             user.save()
-            assign_role_to_user(user, self.cleaned_data['role'])
+            groups = self.cleaned_data.get('groups')
+            if groups is not None:
+                user.groups.set(groups)
         return user
