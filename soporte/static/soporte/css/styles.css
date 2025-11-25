@@ -110,6 +110,73 @@ body {
     gap: .5rem;
 }
 
+.card-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.card-link:focus-visible {
+    outline: 3px solid rgba(13, 110, 253, .3);
+    outline-offset: 4px;
+}
+
+.stat-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid #e5e7eb;
+    border-left: 6px solid var(--stat-accent, #0d6efd);
+    transition: transform .2s ease, box-shadow .2s ease;
+    height: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .08);
+}
+
+.stat-card-primary { --stat-accent: #0d6efd; }
+.stat-card-danger { --stat-accent: #e74a3b; }
+.stat-card-warning { --stat-accent: #f6c23e; }
+.stat-card-success { --stat-accent: #1cc88a; }
+
+.stat-label {
+    text-transform: uppercase;
+    color: #6c757d;
+    font-size: .8rem;
+    font-weight: 700;
+    margin-bottom: .35rem;
+    letter-spacing: .02em;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0;
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: rgba(13, 110, 253, .08);
+    color: #0d6efd;
+    font-size: 1.5rem;
+}
+
+.stat-card-danger .stat-icon { background: rgba(231, 74, 59, .12); color: #e74a3b; }
+.stat-card-warning .stat-icon { background: rgba(246, 194, 62, .16); color: #d49a00; }
+.stat-card-success .stat-icon { background: rgba(28, 200, 138, .12); color: #1c8c6b; }
+
+.section-card {
+    height: 100%;
+}
+
 /* Títulos */
 .page-title {
     font-size: 1.8rem;
