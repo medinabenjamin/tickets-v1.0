@@ -1,55 +1,117 @@
 {% extends 'soporte/base.html' %}
+{% load static %}
 
 {% block title %}Usuarios y Roles{% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <div class="d-flex align-items-center mb-3">
-        <h2 class="page-title mb-0">Usuarios y Roles</h2>
-        <a href="{% url 'crear_usuario' %}" class="btn btn-primary btn-sm ms-auto float-end">Crear nuevo usuario</a>
+    <div class="d-flex align-items-center mb-2">
+        <div>
+            <h2 class="page-title mb-0">Usuarios registrados</h2>
+            <p class="page-subtitle">Administra los usuarios del sistema</p>
+        </div>
+        <div class="ms-auto d-flex gap-2">
+            <a href="{% url 'roles_list' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-user-shield me-1"></i> Roles &amp; Permisos</a>
+            <a href="{% url 'crear_usuario' %}" class="btn btn-primary btn-sm"><i class="fas fa-user-plus me-1"></i> Nuevo usuario</a>
+        </div>
+    </div>
+
+    <div class="card-custom mb-3">
+        <div class="card-custom-header d-flex justify-content-between align-items-center">
+            <div><i class="fas fa-filter me-2"></i>Filtros</div>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosPanel" aria-expanded="true">Mostrar / Ocultar</button>
+        </div>
+        <div class="collapse show" id="filtrosPanel">
+            <div class="card-body">
+                <form method="get" id="filters-form" class="row g-3 align-items-end">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label" for="searchInput">Buscar</label>
+                        <input type="text" name="q" value="{{ query }}" class="form-control" id="searchInput" placeholder="Buscar por nombre, usuario o correo…" autocomplete="off">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label" for="roleSelect">Rol</label>
+                        <select name="role" id="roleSelect" class="form-select">
+                            <option value="">Todos</option>
+                            {% for rol in roles_disponibles %}
+                                <option value="{{ rol }}" {% if role_filter == rol %}selected{% endif %}>{{ rol }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <label class="form-label" for="estadoSelect">Estado</label>
+                        <select name="is_active" id="estadoSelect" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="1" {% if is_active_filter == '1' %}selected{% endif %}>Activo</option>
+                            <option value="0" {% if is_active_filter == '0' %}selected{% endif %}>Inactivo</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-dark flex-fill">Aplicar filtros</button>
+                        <a href="{% url 'mantenedor_usuarios' %}" class="btn btn-outline-secondary flex-fill">Limpiar</a>
+                    </div>
+                    <input type="hidden" name="order" value="{{ order }}">
+                </form>
+            </div>
+        </div>
     </div>
 
     <div class="card-custom">
         <div class="card-custom-header d-flex justify-content-between align-items-center">
-            <div><i class="fas fa-users me-2"></i>Usuarios registrados</div>
-            <span class="badge bg-dark text-white">{{ usuarios|length }} en total</span>
+            <div><i class="fas fa-users me-2"></i>Listado de usuarios</div>
+            <span class="badge bg-dark text-white">{{ total }} en total</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 table-custom">
                     <thead class="table-light">
                         <tr>
-                            <th scope="col">Usuario</th>
-                            <th scope="col" class="d-none d-sm-table-cell">Correo</th>
+                            <th scope="col" style="width: 80px;">ID</th>
+                            <th scope="col"><a class="text-decoration-none" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if role_filter %}role={{ role_filter|urlencode }}&{% endif %}{% if is_active_filter %}is_active={{ is_active_filter }}&{% endif %}order={{ order_toggles.username }}">Usuario {% if order == 'username' %}<i class="fas fa-sort-alpha-down ms-1"></i>{% elif order == '-username' %}<i class="fas fa-sort-alpha-up ms-1"></i>{% endif %}</a></th>
+                            <th scope="col"><a class="text-decoration-none" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if role_filter %}role={{ role_filter|urlencode }}&{% endif %}{% if is_active_filter %}is_active={{ is_active_filter }}&{% endif %}order={{ order_toggles.email }}">Correo {% if order == 'email' %}<i class="fas fa-sort-alpha-down ms-1"></i>{% elif order == '-email' %}<i class="fas fa-sort-alpha-up ms-1"></i>{% endif %}</a></th>
+                            <th scope="col"><a class="text-decoration-none" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if role_filter %}role={{ role_filter|urlencode }}&{% endif %}{% if is_active_filter %}is_active={{ is_active_filter }}&{% endif %}order={{ order_toggles.date_joined }}">Fecha registro {% if order == 'date_joined' %}<i class="fas fa-sort-numeric-down ms-1"></i>{% elif order == '-date_joined' %}<i class="fas fa-sort-numeric-up ms-1"></i>{% endif %}</a></th>
+                            <th scope="col"><a class="text-decoration-none" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if role_filter %}role={{ role_filter|urlencode }}&{% endif %}{% if is_active_filter %}is_active={{ is_active_filter }}&{% endif %}order={{ order_toggles.last_login }}">Último ingreso {% if order == 'last_login' %}<i class="fas fa-sort-numeric-down ms-1"></i>{% elif order == '-last_login' %}<i class="fas fa-sort-numeric-up ms-1"></i>{% endif %}</a></th>
                             <th scope="col" class="text-center">Estado</th>
-                            <th scope="col" class="text-center">Rol</th>
-                            <th scope="col" class="text-end">Acciones</th>
+                            <th scope="col">Rol(es)</th>
+                            <th scope="col" class="text-end" style="width: 150px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for user in usuarios %}
+                        {% for user in page_obj.object_list %}
                         <tr>
+                            <td>#{{ user.id }}</td>
                             <td>
                                 <div class="fw-semibold">{{ user.get_full_name|default:user.username }}</div>
                                 <small class="text-muted">@{{ user.username }}</small>
                             </td>
-                            <td class="d-none d-sm-table-cell">{{ user.email|default:'-' }}</td>
+                            <td>{{ user.email|default:'-' }}</td>
+                            <td>{{ user.date_joined|date:"d M Y H:i" }}</td>
+                            <td>{{ user.last_login|date:"d M Y H:i"|default:'-' }}</td>
                             <td class="text-center">
                                 {% if user.is_active %}
-                                    <span class="badge badge-estado-activo">Activo</span>
+                                    <span class="badge bg-success">Activo</span>
                                 {% else %}
-                                    <span class="badge rounded-pill bg-danger">Inactivo</span>
+                                    <span class="badge bg-secondary">Inactivo</span>
                                 {% endif %}
                             </td>
-                            <td class="text-center">
-                                <span class="badge {% if user.role_label == 'Administrador' %}badge-rol-admin{% elif user.role_label == 'Solicitante' %}badge-rol-solicitante{% endif %} {{ user.role_badge }}" title="{{ user.role_label }}">{{ user.role_label }}</span>
+                            <td>
+                                {% if user.groups.all %}
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for group in user.groups.all %}
+                                            <span class="badge bg-light text-dark border">{{ group.name }}</span>
+                                        {% empty %}
+                                            <span class="text-muted">Sin rol</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">Sin rol</span>
+                                {% endif %}
                             </td>
                             <td class="text-end">
                                 <div class="btn-group" role="group">
-                                    <a href="{% url 'editar_usuario' user.id %}" class="btn btn-sm btn-outline-primary" title="Editar usuario">
+                                    <a href="{% url 'editar_usuario' user.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{% url 'eliminar_usuario' user.id %}" class="btn btn-sm btn-outline-danger{% if user == request.user %} disabled{% endif %}" title="Eliminar usuario"{% if user == request.user %} tabindex="-1" aria-disabled="true"{% endif %}>
+                                    <a href="{% url 'eliminar_usuario' user.id %}" class="btn btn-sm btn-outline-danger{% if user == request.user %} disabled{% endif %}" title="Eliminar"{% if user == request.user %} aria-disabled="true"{% endif %}>
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
@@ -57,9 +119,9 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
+                            <td colspan="8" class="text-center py-5 text-muted">
                                 <i class="fas fa-user-slash fa-2x mb-3"></i>
-                                <p class="mb-0">Aún no hay usuarios registrados.</p>
+                                <p class="mb-0">No se encontraron usuarios con los filtros seleccionados.</p>
                             </td>
                         </tr>
                         {% endfor %}
@@ -67,6 +129,27 @@
                 </table>
             </div>
         </div>
+        <div class="card-footer d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+            <div class="text-muted">Mostrando {{ start_index }}–{{ end_index }} de {{ total }} usuarios</div>
+            <nav aria-label="Paginación de usuarios">
+                <ul class="pagination mb-0">
+                    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                        <a class="page-link" href="?{% if page_obj.has_previous %}page={{ page_obj.previous_page_number }}&{% endif %}{% if base_query %}{{ base_query }}{% endif %}">Anterior</a>
+                    </li>
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if base_query %}&{{ base_query }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="?{% if page_obj.has_next %}page={{ page_obj.next_page_number }}&{% endif %}{% if base_query %}{{ base_query }}{% endif %}">Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
     </div>
 </div>
+<script src="{% static 'soporte/js/usuarios-filtros.js' %}"></script>
 {% endblock %}

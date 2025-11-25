@@ -1,0 +1,92 @@
+{% extends 'soporte/base.html' %}
+{% load static %}
+
+{% block title %}Roles & Permisos{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex align-items-center mb-2">
+        <div>
+            <h2 class="page-title mb-0">Roles &amp; Permisos</h2>
+            <p class="page-subtitle">Administra roles basados en permisos</p>
+        </div>
+        <div class="ms-auto">
+            <a href="{% url 'rol_crear' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> Nuevo rol</a>
+        </div>
+    </div>
+
+    <div class="card-custom mb-3">
+        <div class="card-custom-header"><i class="fas fa-search me-2"></i>Búsqueda</div>
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-12 col-md-8">
+                    <label class="form-label" for="searchRole">Nombre del rol</label>
+                    <input type="text" class="form-control" id="searchRole" name="q" value="{{ query }}" placeholder="Buscar rol...">
+                </div>
+                <div class="col-12 col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark flex-fill">Buscar</button>
+                    <a href="{% url 'roles_list' %}" class="btn btn-outline-secondary flex-fill">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <div class="card-custom-header d-flex justify-content-between align-items-center">
+            <div><i class="fas fa-users-cog me-2"></i>Listado de roles</div>
+            <span class="badge bg-dark text-white">{{ page_obj.paginator.count }} en total</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 table-custom">
+                <thead class="table-light">
+                    <tr>
+                        <th>Rol</th>
+                        <th class="text-center"># Usuarios</th>
+                        <th class="text-center">Permisos</th>
+                        <th class="text-end" style="width: 160px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rol in page_obj.object_list %}
+                    <tr>
+                        <td class="fw-semibold">{{ rol.name }}</td>
+                        <td class="text-center"><span class="badge bg-light text-dark border">{{ rol.total_usuarios }}</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ rol.permissions.count }}</span></td>
+                        <td class="text-end">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'rol_editar' rol.id %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fas fa-edit"></i></a>
+                                <a href="{% url 'rol_eliminar' rol.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">No se encontraron roles.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+            <div class="text-muted">Mostrando {{ start_index }}–{{ end_index }} de {{ page_obj.paginator.count }} roles</div>
+            <nav aria-label="Paginación de roles">
+                <ul class="pagination mb-0">
+                    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                        <a class="page-link" href="?{% if page_obj.has_previous %}page={{ page_obj.previous_page_number }}&{% endif %}{% if base_query %}{{ base_query }}{% endif %}">Anterior</a>
+                    </li>
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if base_query %}&{{ base_query }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="?{% if page_obj.has_next %}page={{ page_obj.next_page_number }}&{% endif %}{% if base_query %}{{ base_query }}{% endif %}">Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
