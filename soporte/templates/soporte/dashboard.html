@@ -12,55 +12,71 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-2">
-        <div class="col-xl-3 col-md-6">
-            <a href="{% url 'home_tickets' %}" class="card-link">
-                <div class="card-custom stat-card stat-card-primary">
-                    <div>
-                        <p class="stat-label">Total de Tickets</p>
-                        <p class="stat-value">{{ total_tickets }}</p>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-ticket-alt"></i>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <a href="{% url 'home_tickets' %}?estado=abierto" class="card-link">
-                <div class="card-custom stat-card stat-card-danger">
-                    <div>
-                        <p class="stat-label">Tickets Abiertos</p>
-                        <p class="stat-value">{{ tickets_abiertos }}</p>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-folder-open"></i>
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'home_tickets' %}" class="card-link text-decoration-none">
+                <div class="card border-left-primary shadow h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total de Tickets</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">{{ total_tickets }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-ticket-alt fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </a>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <a href="{% url 'home_tickets' %}?estado=progreso" class="card-link">
-                <div class="card-custom stat-card stat-card-warning">
-                    <div>
-                        <p class="stat-label">En Progreso</p>
-                        <p class="stat-value">{{ tickets_en_progreso }}</p>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-spinner"></i>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'home_tickets' %}?estado=abierto" class="card-link text-decoration-none">
+                <div class="card border-left-danger shadow h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-danger text-uppercase mb-1">Tickets Abiertos</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">{{ tickets_abiertos }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-folder-open fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </a>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <a href="{% url 'home_tickets' %}?estado=cerrado" class="card-link">
-                <div class="card-custom stat-card stat-card-success">
-                    <div>
-                        <p class="stat-label">Cerrados / Resueltos</p>
-                        <p class="stat-value">{{ tickets_cerrados }}</p>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'home_tickets' %}?estado=progreso" class="card-link text-decoration-none">
+                <div class="card border-left-warning shadow h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">En Progreso</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">{{ tickets_en_progreso }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-spinner fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'home_tickets' %}?estado=cerrado" class="card-link text-decoration-none">
+                <div class="card border-left-success shadow h-100 py-2 card-hover">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-success text-uppercase mb-1">Cerrados / Resueltos</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800">{{ tickets_cerrados }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </a>
