@@ -26,10 +26,12 @@ def lista_faqs(request):
             Q(pregunta__icontains=search_query) | Q(respuesta__icontains=search_query)
         )
 
-    faqs = faqs_queryset.order_by('id').prefetch_related('pasos')
+    faqs_general = faqs_queryset.filter(categoria__iexact='General').order_by('id').prefetch_related('pasos')
+    faqs_interaccion = faqs_queryset.filter(categoria__iexact='Interacción con SolveIT Desk').order_by('id').prefetch_related('pasos')
 
     context = {
-        'faqs': faqs,
+        'faqs_general': faqs_general,
+        'faqs_interaccion': faqs_interaccion,
         'search_query': search_query,
     }
     return render(request, 'faq/lista_faqs.html', context)
