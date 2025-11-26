@@ -100,9 +100,12 @@ def dashboard_reportes(request):
 
     for item in tickets_por_categoria:
         if total_tickets:
-            item['percentage'] = (item['count'] / total_tickets) * 100
+            percentage = (item['count'] / total_tickets) * 100
         else:
-            item['percentage'] = 0
+            percentage = 0
+
+        item['percentage'] = percentage
+        item['percentage_display'] = f"{percentage:.2f}"
 
     context = {
         'avg_resolution_time_global': avg_resolution_time_global,
