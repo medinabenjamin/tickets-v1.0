@@ -3,6 +3,26 @@
 {% block title %}Autoayuda (FAQ){% endblock %}
 
 {% block content %}
+<style>
+  .faq-card-header {
+    background-color: #000;
+    color: #fff;
+    border-radius: .5rem;
+    padding: .75rem 1rem;
+  }
+
+  .faq-card-header i {
+    color: inherit;
+  }
+
+  .faq-section { display: none; }
+  .faq-section.active { display: block; }
+
+  .faq-toggle .btn.active {
+    background-color: #000;
+    color: #fff;
+  }
+</style>
 <h2 class="page-title">Autoayuda (FAQ)</h2>
 <p class="page-subtitle">Encuentra respuestas a las preguntas más frecuentes.</p>
 
@@ -21,7 +41,7 @@
 {% endif %}
 
 <div class="card-custom">
-  <div class="card-custom-header d-flex align-items-center">
+  <div class="card-custom-header faq-card-header d-flex align-items-center">
     <i class="fas fa-search me-2"></i>
     <span>Buscar una solución</span>
   </div>
@@ -38,58 +58,114 @@
 </div>
 
 <div class="card-custom mt-3">
-  <div class="card-custom-header d-flex align-items-center">
+  <div class="card-custom-header faq-card-header d-flex align-items-center">
     <i class="fas fa-question-circle me-2"></i>
     <span>Preguntas frecuentes</span>
   </div>
   <div class="p-4">
-    {% if faqs %}
-      {% regroup faqs by categoria as faqs_por_categoria %}
-      {% for categoria in faqs_por_categoria %}
-        <h3 class="mb-3 mt-4 border-bottom pb-2">{{ categoria.grouper }}</h3>
-        <div class="accordion" id="accordion-{{ categoria.grouper|slugify }}">
-          {% for item in categoria.list %}
-            <div class="accordion-item mb-2">
-              <h2 class="accordion-header" id="heading-{{ item.id }}">
-                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ item.id }}" aria-expanded="false" aria-controls="collapse-{{ item.id }}">
-                  {{ item.pregunta }}
-                </button>
-              </h2>
-              <div id="collapse-{{ item.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ item.id }}" data-bs-parent="#accordion-{{ categoria.grouper|slugify }}">
-                <div class="accordion-body">
-                  <div class="mb-3">{{ item.respuesta|linebreaks }}</div>
+    {% if faqs_general or faqs_interaccion %}
+      <div class="faq-toggle btn-group mb-4" role="group" aria-label="Categorías de preguntas frecuentes">
+        <button type="button" class="btn btn-outline-dark active" data-target="faq-general">General</button>
+        <button type="button" class="btn btn-outline-dark" data-target="faq-interaccion">Interacción con SolveIT Desk</button>
+      </div>
 
-                  {% with pasos=item.pasos.all %}
-                    {% if pasos %}
-                      <ol class="mb-3">
-                        {% for p in pasos %}
-                          <li class="mb-2">
-                            <div>{{ p.descripcion|linebreaksbr }}</div>
-                            {% if p.adjunto %}
-                              <div class="mt-1">
-                                <a href="{{ p.adjunto.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">Ver adjunto</a>
-                              </div>
-                            {% endif %}
-                          </li>
-                        {% endfor %}
-                      </ol>
-                    {% else %}
-                      <em>No hay pasos registrados.</em>
+      <div id="faq-general" class="faq-section active">
+        {% if faqs_general %}
+          <div class="accordion" id="accordion-general">
+            {% for item in faqs_general %}
+              <div class="accordion-item mb-2">
+                <h2 class="accordion-header" id="heading-general-{{ item.id }}">
+                  <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-general-{{ item.id }}" aria-expanded="false" aria-controls="collapse-general-{{ item.id }}">
+                    {{ item.pregunta }}
+                  </button>
+                </h2>
+                <div id="collapse-general-{{ item.id }}" class="accordion-collapse collapse" aria-labelledby="heading-general-{{ item.id }}" data-bs-parent="#accordion-general">
+                  <div class="accordion-body">
+                    <div class="mb-3">{{ item.respuesta|linebreaks }}</div>
+
+                    {% with pasos=item.pasos.all %}
+                      {% if pasos %}
+                        <ol class="mb-3">
+                          {% for p in pasos %}
+                            <li class="mb-2">
+                              <div>{{ p.descripcion|linebreaksbr }}</div>
+                              {% if p.adjunto %}
+                                <div class="mt-1">
+                                  <a href="{{ p.adjunto.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">Ver adjunto</a>
+                                </div>
+                              {% endif %}
+                            </li>
+                          {% endfor %}
+                        </ol>
+                      {% else %}
+                        <em>No hay pasos registrados.</em>
+                      {% endif %}
+                    {% endwith %}
+
+                    {% if request.user.is_staff %}
+                      <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'faq_editar' item.id %}" class="btn btn-outline-secondary btn-sm">Editar</a>
+                        <a href="{% url 'faq_eliminar' item.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                      </div>
                     {% endif %}
-                  {% endwith %}
-
-                  {% if request.user.is_staff %}
-                    <div class="d-flex gap-2 justify-content-end">
-                      <a href="{% url 'faq_editar' item.id %}" class="btn btn-outline-secondary btn-sm">Editar</a>
-                      <a href="{% url 'faq_eliminar' item.id %}" class="btn btn-danger btn-sm">Eliminar</a>
-                    </div>
-                  {% endif %}
+                  </div>
                 </div>
               </div>
-            </div>
-          {% endfor %}
-        </div>
-      {% endfor %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">No hay preguntas generales disponibles.</p>
+        {% endif %}
+      </div>
+
+      <div id="faq-interaccion" class="faq-section">
+        {% if faqs_interaccion %}
+          <div class="accordion" id="accordion-interaccion">
+            {% for item in faqs_interaccion %}
+              <div class="accordion-item mb-2">
+                <h2 class="accordion-header" id="heading-interaccion-{{ item.id }}">
+                  <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-interaccion-{{ item.id }}" aria-expanded="false" aria-controls="collapse-interaccion-{{ item.id }}">
+                    {{ item.pregunta }}
+                  </button>
+                </h2>
+                <div id="collapse-interaccion-{{ item.id }}" class="accordion-collapse collapse" aria-labelledby="heading-interaccion-{{ item.id }}" data-bs-parent="#accordion-interaccion">
+                  <div class="accordion-body">
+                    <div class="mb-3">{{ item.respuesta|linebreaks }}</div>
+
+                    {% with pasos=item.pasos.all %}
+                      {% if pasos %}
+                        <ol class="mb-3">
+                          {% for p in pasos %}
+                            <li class="mb-2">
+                              <div>{{ p.descripcion|linebreaksbr }}</div>
+                              {% if p.adjunto %}
+                                <div class="mt-1">
+                                  <a href="{{ p.adjunto.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">Ver adjunto</a>
+                                </div>
+                              {% endif %}
+                            </li>
+                          {% endfor %}
+                        </ol>
+                      {% else %}
+                        <em>No hay pasos registrados.</em>
+                      {% endif %}
+                    {% endwith %}
+
+                    {% if request.user.is_staff %}
+                      <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'faq_editar' item.id %}" class="btn btn-outline-secondary btn-sm">Editar</a>
+                        <a href="{% url 'faq_eliminar' item.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">No hay preguntas disponibles sobre el uso de SolveIT Desk.</p>
+        {% endif %}
+      </div>
     {% else %}
       <div class="text-center py-5">
         <i class="fas fa-search-minus fa-3x text-muted mb-3"></i>
@@ -100,4 +176,26 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleButtons = document.querySelectorAll('.faq-toggle .btn');
+    const sections = document.querySelectorAll('.faq-section');
+
+    toggleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-target');
+
+        toggleButtons.forEach((btn) => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        sections.forEach((section) => {
+          section.classList.toggle('active', section.id === targetId);
+        });
+      });
+    });
+  });
+</script>
 {% endblock %}
