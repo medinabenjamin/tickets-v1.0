@@ -52,9 +52,9 @@ def dashboard_reportes(request):
         ),
         vencidos_abiertos=Count(
             'tickets_asignados',
-            filter=Q(
-                tickets_asignados__estado_sla=Ticket.SLA_ESTADO_VENCIDO,
-                ~Q(tickets_asignados__estado__in=['resuelto', 'cerrado']),
+            filter=(
+                Q(tickets_asignados__estado_sla=Ticket.SLA_ESTADO_VENCIDO)
+                & ~Q(tickets_asignados__estado__in=['resuelto', 'cerrado'])
             ),
         ),
         cerrados_fuera_plazo=Count(
