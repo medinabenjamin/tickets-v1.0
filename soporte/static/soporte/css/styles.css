@@ -18,13 +18,15 @@ body {
 }
 
 #sidebar-wrapper .sidebar-heading {
-    padding: 0.875rem 1.25rem;
+    height: 64px;
+    padding: 0 1.25rem;
     font-size: 1.2rem;
     color: white;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     transition: all .25s ease-out;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .sidebar-brand {
@@ -43,11 +45,14 @@ body {
 
 .sidebar-toggle-btn {
     width: 100%;
+    max-width: 220px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
     font-weight: 600;
+    height: 42px;
+    padding: 0.5rem 0.75rem;
 }
 
 #sidebarHeadingToggle.floating-toggle {
@@ -96,6 +101,13 @@ body {
 .main-navbar-brand {
     font-weight: 700;
     color: #212529;
+}
+
+.main-navbar-brand .sidebar-logo {
+    height: 42px;
+    max-height: 52px;
+    width: auto;
+    filter: brightness(0);
 }
 
 /* Estilo para los íconos en el menú */
