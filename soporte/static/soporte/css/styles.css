@@ -225,6 +225,15 @@ body {
     color: #495057;
 }
 
+.table-header-inverse th {
+    background-color: #000;
+    color: #fff !important;
+}
+
+.table-header-inverse th a {
+    color: #fff;
+}
+
 /* Sidebar */
 .sidebar-logo {
     height: 34px;
