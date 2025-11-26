@@ -1,7 +1,7 @@
 # reportes/views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from soporte.models import Ticket
 from django.contrib.auth.models import User
 
@@ -25,12 +25,64 @@ def dashboard_reportes(request):
     # 2. Tiempo Promedio de Resolución POR TÉCNICO
     resolution_by_tech = User.objects.filter(
         is_staff=True,
-        tickets_asignados__estado__in=['resuelto', 'cerrado'],
-        tickets_asignados__tiempo_resolucion__isnull=False
+        tickets_asignados__isnull=False,
     ).annotate(
-        avg_time=Avg('tickets_asignados__tiempo_resolucion'),
-        total_resolved=Count('tickets_asignados')
+        avg_time=Avg(
+            'tickets_asignados__tiempo_resolucion',
+            filter=Q(
+                tickets_asignados__estado__in=['resuelto', 'cerrado'],
+                tickets_asignados__tiempo_resolucion__isnull=False,
+            ),
+        ),
+        total_resolved=Count(
+            'tickets_asignados',
+            filter=Q(
+                tickets_asignados__estado__in=['resuelto', 'cerrado'],
+                tickets_asignados__tiempo_resolucion__isnull=False,
+            ),
+        ),
+        tickets_al_dia=Count(
+            'tickets_asignados',
+            filter=Q(
+                tickets_asignados__estado_sla__in=[
+                    Ticket.SLA_ESTADO_PENDIENTE,
+                    Ticket.SLA_ESTADO_CUMPLIDO,
+                ]
+            ),
+        ),
+        vencidos_abiertos=Count(
+            'tickets_asignados',
+            filter=Q(
+                tickets_asignados__estado_sla=Ticket.SLA_ESTADO_VENCIDO,
+                ~Q(tickets_asignados__estado__in=['resuelto', 'cerrado']),
+            ),
+        ),
+        cerrados_fuera_plazo=Count(
+            'tickets_asignados',
+            filter=Q(
+                tickets_asignados__estado_sla=Ticket.SLA_ESTADO_VENCIDO,
+                tickets_asignados__estado__in=['resuelto', 'cerrado'],
+            ),
+        ),
     ).order_by('avg_time')
+
+    prioridades_por_tecnico_qs = (
+        Ticket.objects.filter(tecnico_asignado__in=resolution_by_tech)
+        .values('tecnico_asignado_id', 'prioridad__nombre')
+        .annotate(total=Count('id'))
+    )
+    prioridades_por_tecnico = {}
+    for entry in prioridades_por_tecnico_qs:
+        prioridades_por_tecnico.setdefault(entry['tecnico_asignado_id'], []).append(
+            {
+                'nombre': entry['prioridad__nombre'],
+                'total': entry['total'],
+            }
+        )
+
+    resolution_by_tech = list(resolution_by_tech)
+    for tech in resolution_by_tech:
+        tech.prioridades = prioridades_por_tecnico.get(tech.id, [])
 
     # 3. Tickets por Categoría
     tickets_por_categoria = list(
