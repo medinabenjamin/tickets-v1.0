@@ -22,8 +22,9 @@ body {
     font-size: 1.2rem;
     color: white;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    cursor: pointer;
     transition: all .25s ease-out;
+    display: flex;
+    justify-content: center;
 }
 
 .sidebar-brand {
@@ -38,6 +39,15 @@ body {
     align-items: center;
     color: inherit;
     text-decoration: none;
+}
+
+.sidebar-toggle-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-weight: 600;
 }
 
 #sidebarHeadingToggle.floating-toggle {
@@ -81,6 +91,11 @@ body {
 .navbar-top {
     background-color: #f8f9fa; /* Color de fondo claro */
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.main-navbar-brand {
+    font-weight: 700;
+    color: #212529;
 }
 
 /* Estilo para los íconos en el menú */
