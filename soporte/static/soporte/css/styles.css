@@ -2,6 +2,7 @@
     --sidebar-width: 15rem;
     --toggle-size: 46px;
     --toggle-radius: 12px;
+    --header-bg: #f8f9fa;
 }
 
 /* Estilos principales del contenedor */
@@ -38,6 +39,9 @@ body {
     justify-content: center;
     align-items: center;
     background: linear-gradient(180deg, #2f343a 0%, #2c3035 100%);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
 }
 
 .sidebar-brand {
@@ -87,20 +91,30 @@ body {
 
 #sidebarHeadingToggle.floating-toggle {
     position: fixed;
-    top: 1rem;
-    left: 1rem;
-    background-color: transparent;
-    border-radius: var(--toggle-radius);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+    top: 0;
+    left: 0;
+    background-color: var(--header-bg);
+    border-radius: 0 1rem 1rem 0;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
     z-index: 1050;
-    border-bottom: none;
-    padding: 0.35rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 0.65rem;
+    width: calc(var(--toggle-size) + 1.75rem);
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 #sidebarHeadingToggle.floating-toggle .sidebar-toggle-btn {
     width: var(--toggle-size);
     height: var(--toggle-size);
     border-radius: var(--toggle-radius);
+    background: var(--header-bg);
+    color: #212529;
+    border-color: #ced4da;
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.08);
 }
 
 #sidebar-wrapper .list-group {
@@ -131,7 +145,7 @@ body {
 
 /* Estilos para la barra superior (navbar) */
 .navbar-top {
-    background-color: #f8f9fa; /* Color de fondo claro */
+    background-color: var(--header-bg); /* Color de fondo claro */
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     min-height: 72px;
 }
