@@ -13,14 +13,11 @@
     <div class="d-flex" id="wrapper">
         <div id="sidebar-wrapper">
             <div class="sidebar-heading" id="sidebarHeadingToggle">
-                <div class="sidebar-brand">
-                    <a href="{% url 'dashboard_principal' %}" class="sidebar-brand-link">
-                        <img src="{% static 'soporte/solveit-desk.png' %}" alt="SolveIT Desk" class="sidebar-logo">
-                        <span>SolveIT Desk</span>
-                    </a>
-                </div>
+                <button type="button" class="btn btn-outline-light sidebar-toggle-btn" id="sidebarHeadingButton" aria-label="Alternar menú">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
-            
+
             <div class="list-group list-group-flush">
                 
                 {% if request.user.is_staff %}
@@ -59,15 +56,21 @@
             </div>
         <div id="page-content-wrapper">
             <nav class="navbar navbar-expand-lg navbar-light navbar-top border-bottom">
-                <div class="container-fluid">
-                    <button class="btn btn-dark d-md-none" id="sidebarToggle">Mostrar menú</button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
-                            <li class="nav-item active">
-                                <span class="nav-link">Bienvenido, {{ request.user.username }}</span>
-                            </li>
-                        </ul>
+                <div class="container-fluid position-relative d-flex align-items-center">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-dark d-md-none" id="sidebarToggle" aria-label="Mostrar u ocultar menú">
+                            <i class="fas fa-bars"></i>
+                        </button>
                     </div>
+                    <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
+                        <li class="nav-item active">
+                            <span class="nav-link">Bienvenido, {{ request.user.username }}</span>
+                        </li>
+                    </ul>
+                    <a href="{% url 'dashboard_principal' %}" class="navbar-brand main-navbar-brand d-inline-flex align-items-center justify-content-center gap-2 position-absolute top-50 start-50 translate-middle">
+                        <img src="{% static 'soporte/solveit-desk.png' %}" alt="SolveIT Desk" class="sidebar-logo">
+                        <span>SolveIT Desk</span>
+                    </a>
                 </div>
             </nav>
 
@@ -80,6 +83,7 @@
     <script>
         const wrapper = document.getElementById("wrapper");
         const sidebarHeadingToggle = document.getElementById("sidebarHeadingToggle");
+        const sidebarHeadingButton = document.getElementById("sidebarHeadingButton");
         const sidebarToggleButton = document.getElementById("sidebarToggle");
         const desktopQuery = window.matchMedia("(min-width: 768px)");
 
@@ -117,7 +121,7 @@
         };
 
         sidebarToggleButton?.addEventListener("click", toggleSidebar);
-        sidebarHeadingToggle.addEventListener("click", toggleSidebar);
+        sidebarHeadingButton.addEventListener("click", toggleSidebar);
 
         if (typeof desktopQuery.addEventListener === "function") {
             desktopQuery.addEventListener("change", updateSidebarStateForViewport);
