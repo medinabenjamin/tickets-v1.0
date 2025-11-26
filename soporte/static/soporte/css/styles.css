@@ -1,3 +1,9 @@
+:root {
+    --sidebar-width: 15rem;
+    --toggle-size: 46px;
+    --toggle-radius: 12px;
+}
+
 /* Estilos principales del contenedor */
 body {
     overflow-x: hidden;
@@ -11,14 +17,18 @@ body {
 /* Estilos de la barra lateral */
 #sidebar-wrapper {
     min-height: 100vh;
-    margin-left: -15rem;
+    margin-left: calc(-1 * var(--sidebar-width));
     transition: margin .25s ease-out;
     background-color: #343a40; /* Fondo oscuro */
     position: relative;
+    width: var(--sidebar-width);
+    overflow: hidden;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0 1rem 1rem 0;
 }
 
 #sidebar-wrapper .sidebar-heading {
-    height: 64px;
+    height: 72px;
     padding: 0 1.25rem;
     font-size: 1.2rem;
     color: white;
@@ -27,6 +37,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    background: linear-gradient(180deg, #2f343a 0%, #2c3035 100%);
 }
 
 .sidebar-brand {
@@ -43,31 +54,57 @@ body {
     text-decoration: none;
 }
 
-.sidebar-toggle-btn {
-    width: 100%;
-    max-width: 220px;
+.icon-toggle-btn {
+    width: var(--toggle-size);
+    height: var(--toggle-size);
+    border-radius: var(--toggle-radius);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    font-weight: 600;
-    height: 42px;
-    padding: 0.5rem 0.75rem;
+    padding: 0;
+    border-width: 2px;
+}
+
+.icon-toggle-btn i {
+    font-size: 1rem;
+}
+
+.sidebar-toggle-btn {
+    background: #212529;
+    border-color: #495057;
+    color: #f8f9fa;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+    width: calc(var(--toggle-size) + 6px);
+    height: calc(var(--toggle-size) + 6px);
+}
+
+.sidebar-toggle-btn:focus-visible,
+.navbar-top .icon-toggle-btn:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.45);
+    outline-offset: 3px;
 }
 
 #sidebarHeadingToggle.floating-toggle {
     position: fixed;
-    top: 0;
-    left: 0;
-    background-color: #343a40;
-    border-radius: 0 0.75rem 0.75rem 0;
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+    top: 1rem;
+    left: 1rem;
+    background-color: transparent;
+    border-radius: var(--toggle-radius);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
     z-index: 1050;
     border-bottom: none;
+    padding: 0.35rem;
+}
+
+#sidebarHeadingToggle.floating-toggle .sidebar-toggle-btn {
+    width: var(--toggle-size);
+    height: var(--toggle-size);
+    border-radius: var(--toggle-radius);
 }
 
 #sidebar-wrapper .list-group {
-    width: 15rem;
+    width: 100%;
 }
 
 #page-content-wrapper {
@@ -88,7 +125,7 @@ body {
         width: 100%;
     }
     #wrapper.toggled #sidebar-wrapper {
-        margin-left: -15rem;
+        margin-left: calc(-1 * var(--sidebar-width));
     }
 }
 
@@ -96,6 +133,7 @@ body {
 .navbar-top {
     background-color: #f8f9fa; /* Color de fondo claro */
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    min-height: 72px;
 }
 
 .main-navbar-brand {
@@ -108,6 +146,13 @@ body {
     max-height: 52px;
     width: auto;
     filter: brightness(0);
+}
+
+.navbar-top .icon-toggle-btn {
+    background: #212529;
+    border-color: #212529;
+    color: #fff;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.22);
 }
 
 /* Estilo para los íconos en el menú */
