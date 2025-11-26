@@ -108,6 +108,10 @@
                         <tr>
                             <th>Técnico</th>
                             <th class="text-center">Tickets Resueltos</th>
+                            <th class="text-center">Tickets al día</th>
+                            <th class="text-center">Vencidos abiertos</th>
+                            <th class="text-center">Cerrados fuera de plazo</th>
+                            <th>Prioridades (según SLA)</th>
                             <th>Tiempo Promedio de Resolución</th>
                         </tr>
                     </thead>
@@ -116,11 +120,23 @@
                         <tr>
                             <td><strong>{{ tech.username }}</strong></td>
                             <td class="text-center"><span class="badge rounded-pill bg-success fs-6">{{ tech.total_resolved }}</span></td>
+                            <td class="text-center"><span class="badge rounded-pill bg-primary fs-6">{{ tech.tickets_al_dia }}</span></td>
+                            <td class="text-center"><span class="badge rounded-pill bg-warning text-dark fs-6">{{ tech.vencidos_abiertos }}</span></td>
+                            <td class="text-center"><span class="badge rounded-pill bg-danger fs-6">{{ tech.cerrados_fuera_plazo }}</span></td>
+                            <td>
+                                {% if tech.prioridades %}
+                                    {% for prioridad in tech.prioridades %}
+                                        <span class="badge bg-secondary me-1">{{ prioridad.nombre }} ({{ prioridad.total }})</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">Sin asignaciones</span>
+                                {% endif %}
+                            </td>
                             <td>{{ tech.avg_time|default:"N/A" }}</td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="3" class="text-center text-muted py-4">No hay técnicos con tickets resueltos para mostrar.</td>
+                            <td colspan="6" class="text-center text-muted py-4">No hay técnicos con tickets para mostrar.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
