@@ -311,6 +311,10 @@ body {
     color: #495057;
 }
 
+.table-custom thead.table-dark th {
+    color: #fff;
+}
+
 .table-header-inverse th {
     background-color: #000;
     color: #fff !important;
