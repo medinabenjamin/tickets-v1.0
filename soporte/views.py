@@ -37,7 +37,7 @@ from django.template.loader import get_template
 # Configura el logger para la aplicación
 logger = logging.getLogger(__name__)
 
-PAGE_SIZE_TICKETS = 10
+PAGE_SIZE_TICKETS = 3 if settings.DEBUG else 10
 
 
 def agrupar_permisos_en_espanol(permisos_qs, permisos_seleccionados):
