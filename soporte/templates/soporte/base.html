@@ -76,40 +76,47 @@
         (function(){
           const wrapper = document.getElementById('wrapper');
           const nav = document.querySelector('.navbar-top.fixed-top');
-          const sidebarToggleButton = document.getElementById('sidebarToggle');
-          const desktopQuery = window.matchMedia('(min-width: 768px)');
+          const toggleBtn = document.getElementById('sidebarToggle');
+          const mql = window.matchMedia('(min-width: 768px)');
+          const sidebar = document.getElementById('sidebar-wrapper');
           const sidebarLinks = document.querySelectorAll('#sidebar-wrapper .list-group-item-action');
 
-          function setTopPadding(){
+          function setHeaderMetrics(){
             if(!nav) return;
             const h = nav.getBoundingClientRect().height || nav.offsetHeight || 56;
-            // Aplica el padding al body para que TODO el layout respete el header fijo
+            document.documentElement.style.setProperty('--header-h', h + 'px');
             document.body.style.paddingTop = h + 'px';
           }
 
-          function syncForViewport(){
-            if (desktopQuery.matches){
-              // Desktop: sidebar visible por defecto
-              wrapper.classList.remove('toggled');
-            }else{
-              // Mobile: sidebar oculta por defecto
-              wrapper.classList.remove('toggled'); // empieza oculta; el botón la mostrará
-            }
-            setTopPadding();
+          function syncViewport(){
+            wrapper.classList.remove('sidebar-open','sidebar-collapsed');
+            setHeaderMetrics();
           }
 
           function toggleSidebar(){
-            // En desktop: toggled = oculta; en mobile: toggled = muestra
-            wrapper.classList.toggle('toggled');
+            if (mql.matches){
+              wrapper.classList.toggle('sidebar-collapsed');
+            } else {
+              wrapper.classList.toggle('sidebar-open');
+            }
           }
+
+          // Cerrar sidebar al tocar backdrop en mobile
+          document.addEventListener('click', (e)=>{
+            if (!mql.matches && wrapper.classList.contains('sidebar-open')){
+              if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)){
+                wrapper.classList.remove('sidebar-open');
+              }
+            }
+          });
+
+          toggleBtn?.addEventListener('click', toggleSidebar);
 
           function activateLink(element){
             sidebarLinks.forEach(link => link.classList.remove('active-module'));
             element.classList.add('active-module');
           }
 
-          // Eventos
-          sidebarToggleButton?.addEventListener('click', toggleSidebar);
           sidebarLinks.forEach(link => {
             if (link.tagName === 'A' && link.pathname === window.location.pathname) {
               activateLink(link);
@@ -117,20 +124,15 @@
             link.addEventListener('click', () => activateLink(link));
           });
 
-          // Recalcular padding al cambiar viewport, al cargar y al redimensionar (debounce)
-          let t;
-          const onResize = () => { clearTimeout(t); t = setTimeout(setTopPadding, 100); };
+          window.addEventListener('load', setHeaderMetrics);
+          window.addEventListener('resize', ()=>{ clearTimeout(window.__rT); window.__rT=setTimeout(setHeaderMetrics,100); });
 
-          if (typeof desktopQuery.addEventListener === 'function'){
-            desktopQuery.addEventListener('change', syncForViewport);
-          }else if (typeof desktopQuery.addListener === 'function'){
-            desktopQuery.addListener(syncForViewport);
+          if (typeof mql.addEventListener === 'function'){
+            mql.addEventListener('change', syncViewport);
+          } else if (typeof mql.addListener === 'function'){
+            mql.addListener(syncViewport);
           }
-          window.addEventListener('load', setTopPadding);
-          window.addEventListener('resize', onResize);
-
-          // Inicial
-          syncForViewport();
+          syncViewport();
         })();
     </script>
     {% block extra_js %}{% endblock %}
