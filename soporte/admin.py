@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import SLARegla, SLACalculo, Ticket, Prioridad
+from .models import SLARegla, SLACalculo, Ticket, Prioridad, TicketHistory
 
 
 @admin.register(Ticket)
@@ -37,4 +37,19 @@ class PrioridadAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'clave', 'minutos_resolucion', 'orden')
     search_fields = ('nombre', 'clave')
     ordering = ('orden', 'nombre')
+
+
+@admin.register(TicketHistory)
+class TicketHistoryAdmin(admin.ModelAdmin):
+    list_display = ('ticket', 'action', 'actor', 'created_at')
+    readonly_fields = ('ticket', 'actor', 'action', 'field', 'old_value', 'new_value', 'metadata', 'created_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
