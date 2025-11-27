@@ -12,14 +12,8 @@
 <body>
     <div class="d-flex" id="wrapper">
         <div id="sidebar-wrapper">
-            <div class="sidebar-heading" id="sidebarHeadingToggle">
-                <button type="button" class="btn btn-outline-light sidebar-toggle-btn icon-toggle-btn" id="sidebarHeadingButton" aria-label="Alternar menú">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-
             <div class="list-group list-group-flush">
-                
+
                 {% if request.user.is_staff %}
                 <a href="{% url 'dashboard_principal' %}" class="list-group-item list-group-item-action bg-dark text-white">
                     <i class="fas fa-tachometer-alt"></i> Dashboard principal
@@ -55,13 +49,11 @@
             </div>
             </div>
         <div id="page-content-wrapper">
-            <nav class="navbar navbar-expand-lg navbar-light navbar-top border-bottom">
+            <nav class="navbar navbar-expand-lg navbar-light navbar-top fixed-top border-bottom">
                 <div class="container-fluid position-relative d-flex align-items-center">
-                    <div class="d-flex align-items-center">
-                        <button class="btn btn-dark d-md-none icon-toggle-btn" id="sidebarToggle" aria-label="Mostrar u ocultar menú">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                    </div>
+                    <button id="sidebarToggle" class="btn sidebar-toggle-btn me-2" type="button" aria-label="Mostrar/ocultar menú">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
                         <li class="nav-item active">
                             <span class="nav-link">Bienvenido, {{ request.user.username }}</span>
@@ -81,70 +73,65 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const wrapper = document.getElementById("wrapper");
-        const sidebarHeadingToggle = document.getElementById("sidebarHeadingToggle");
-        const sidebarHeadingButton = document.getElementById("sidebarHeadingButton");
-        const sidebarToggleButton = document.getElementById("sidebarToggle");
-        const desktopQuery = window.matchMedia("(min-width: 768px)");
+        (function(){
+          const wrapper = document.getElementById('wrapper');
+          const nav = document.querySelector('.navbar-top.fixed-top');
+          const sidebarToggleButton = document.getElementById('sidebarToggle');
+          const desktopQuery = window.matchMedia('(min-width: 768px)');
+          const sidebarLinks = document.querySelectorAll('#sidebar-wrapper .list-group-item-action');
 
-        let isSidebarVisible = false;
+          function setTopPadding(){
+            if(!nav) return;
+            const h = nav.getBoundingClientRect().height || nav.offsetHeight || 56;
+            // Aplica el padding al body para que TODO el layout respete el header fijo
+            document.body.style.paddingTop = h + 'px';
+          }
 
-        const updateHeadingAppearance = () => {
-            if (isSidebarVisible) {
-                sidebarHeadingToggle.classList.remove("floating-toggle");
-            } else {
-                sidebarHeadingToggle.classList.add("floating-toggle");
+          function syncForViewport(){
+            if (desktopQuery.matches){
+              // Desktop: sidebar visible por defecto
+              wrapper.classList.remove('toggled');
+            }else{
+              // Mobile: sidebar oculta por defecto
+              wrapper.classList.remove('toggled'); // empieza oculta; el botón la mostrará
             }
-        };
+            setTopPadding();
+          }
 
-        const updateSidebarStateForViewport = () => {
-            if (desktopQuery.matches) {
-                // En pantallas grandes la barra lateral está visible por defecto.
-                wrapper.classList.remove("toggled");
-                isSidebarVisible = true;
-            } else {
-                // En pantallas pequeñas la barra lateral está oculta por defecto.
-                wrapper.classList.remove("toggled");
-                isSidebarVisible = false;
+          function toggleSidebar(){
+            // En desktop: toggled = oculta; en mobile: toggled = muestra
+            wrapper.classList.toggle('toggled');
+          }
+
+          function activateLink(element){
+            sidebarLinks.forEach(link => link.classList.remove('active-module'));
+            element.classList.add('active-module');
+          }
+
+          // Eventos
+          sidebarToggleButton?.addEventListener('click', toggleSidebar);
+          sidebarLinks.forEach(link => {
+            if (link.tagName === 'A' && link.pathname === window.location.pathname) {
+              activateLink(link);
             }
-            updateHeadingAppearance();
-        };
+            link.addEventListener('click', () => activateLink(link));
+          });
 
-        const toggleSidebar = () => {
-            wrapper.classList.toggle("toggled");
-            if (desktopQuery.matches) {
-                isSidebarVisible = !wrapper.classList.contains("toggled");
-            } else {
-                isSidebarVisible = wrapper.classList.contains("toggled");
-            }
-            updateHeadingAppearance();
-        };
+          // Recalcular padding al cambiar viewport, al cargar y al redimensionar (debounce)
+          let t;
+          const onResize = () => { clearTimeout(t); t = setTimeout(setTopPadding, 100); };
 
-        sidebarToggleButton?.addEventListener("click", toggleSidebar);
-        sidebarHeadingButton.addEventListener("click", toggleSidebar);
+          if (typeof desktopQuery.addEventListener === 'function'){
+            desktopQuery.addEventListener('change', syncForViewport);
+          }else if (typeof desktopQuery.addListener === 'function'){
+            desktopQuery.addListener(syncForViewport);
+          }
+          window.addEventListener('load', setTopPadding);
+          window.addEventListener('resize', onResize);
 
-        const sidebarLinks = document.querySelectorAll("#sidebar-wrapper .list-group-item-action");
-
-        const activateLink = (element) => {
-            sidebarLinks.forEach(link => link.classList.remove("active-module"));
-            element.classList.add("active-module");
-        };
-
-        sidebarLinks.forEach(link => {
-            if (link.tagName === "A" && link.pathname === window.location.pathname) {
-                activateLink(link);
-            }
-
-            link.addEventListener("click", () => activateLink(link));
-        });
-
-        if (typeof desktopQuery.addEventListener === "function") {
-            desktopQuery.addEventListener("change", updateSidebarStateForViewport);
-        } else if (typeof desktopQuery.addListener === "function") {
-            desktopQuery.addListener(updateSidebarStateForViewport);
-        }
-
-        updateSidebarStateForViewport();
+          // Inicial
+          syncForViewport();
+        })();
     </script>
     {% block extra_js %}{% endblock %}
 </body>
