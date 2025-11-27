@@ -1,5 +1,6 @@
 :root {
-    --sidebar-width: 15rem;
+    --sidebar-w: 15rem;
+    --header-h: 56px; /* JS la actualizará */
     --toggle-size: 46px;
     --toggle-radius: 12px;
     --header-bg: #f8f9fa;
@@ -15,12 +16,15 @@ body {
 
 /* Estilos de la barra lateral */
 #sidebar-wrapper{
-  min-height: 100vh;
-  margin-left: -15rem;
-  transition: margin .25s ease-out;
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  width: var(--sidebar-w);
+  height: calc(100vh - var(--header-h));
+  overflow-y: auto;
   background-color: #343a40;
-  width: var(--sidebar-width);
-  overflow: hidden;
+  transition: transform .25s ease-out, margin-left .25s ease-out;
+  transform: translateX(0);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0 1rem 1rem 0;
 }
@@ -54,9 +58,13 @@ body {
 
 /* Elimina por completo el estilo del botón flotante anterior */
 #sidebarHeadingToggle, #sidebarHeadingToggle.floating-toggle{
-  position: static !important; top:auto !important; left:auto !important;
-  background: transparent !important; border:0 !important; box-shadow:none !important;
-  pointer-events: none; /* no se usa como botón */
+  position: static !important;
+  top:auto !important;
+  left:auto !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  box-shadow:none !important;
+  border:0 !important;
 }
 
 .list-group-item.active-module,
@@ -71,20 +79,37 @@ body {
     width: 100%;
 }
 
-#page-content-wrapper{ width:100%; }
-
-/* Efecto de "toggle" para la barra lateral */
-#wrapper.toggled #sidebar-wrapper {
-    margin-left: 0;
+#page-content-wrapper{
+  width: 100%;
+  transition: margin-left .25s ease-out;
 }
 
-@media (min-width: 768px) {
-    #sidebar-wrapper {
-        margin-left: 0;
-    }
-    #wrapper.toggled #sidebar-wrapper {
-        margin-left: calc(-1 * var(--sidebar-width));
-    }
+/* Desktop (>=768px): sidebar visible y contenido desplazado */
+@media (min-width: 768px){
+  #page-content-wrapper{ margin-left: var(--sidebar-w); }
+  .sidebar-collapsed #page-content-wrapper{ margin-left: 0; }
+  .sidebar-collapsed #sidebar-wrapper{ transform: translateX(-100%); }
+}
+
+/* Mobile (<768px): sidebar off-canvas */
+@media (max-width: 767.98px){
+  #sidebar-wrapper{
+    transform: translateX(-100%);
+    width: var(--sidebar-w);
+  }
+  .sidebar-open #sidebar-wrapper{ transform: translateX(0); }
+  #page-content-wrapper{ margin-left: 0; }
+}
+
+@media (max-width: 767.98px){
+  .sidebar-open::after{
+    content:"";
+    position: fixed;
+    top: var(--header-h);
+    left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.25);
+    z-index: 1029;
+  }
 }
 
 /* Estilos para la barra superior (navbar) */
