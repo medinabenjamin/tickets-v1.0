@@ -12,6 +12,36 @@ body {
     background-color: #f5f6fa;
 }
 
+/* Contenedor de marca alineado */
+.navbar-brand{
+  padding-top: 0;
+  padding-bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* Logo: altura = alto del header – margen interno para respiración */
+.brand-logo{
+  height: calc(var(--header-h) - 12px);   /* 6px de respiro arriba y abajo */
+  max-height: calc(var(--header-h) - 12px);
+  width: auto;                /* conserva proporción */
+  object-fit: contain;        /* evita deformaciones */
+  display: block;
+  image-rendering: -webkit-optimize-contrast; /* mejor nitidez en PNG */
+}
+
+/* Texto al lado del logo: no fuerces el alto del header */
+.brand-text{
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* En pantallas muy pequeñas, evita que el logo empuje elementos */
+@media (max-width: 575.98px){
+  .brand-text{ font-size: .95rem; }
+}
+
 #wrapper{ display:flex; }
 
 /* Estilos de la barra lateral */
@@ -127,10 +157,7 @@ body {
     color: #212529;
 }
 
-.main-navbar-brand .sidebar-logo {
-    height: 42px;
-    max-height: 52px;
-    width: auto;
+.main-navbar-brand .brand-logo {
     filter: brightness(0);
 }
 
