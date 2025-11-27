@@ -123,6 +123,21 @@
         sidebarToggleButton?.addEventListener("click", toggleSidebar);
         sidebarHeadingButton.addEventListener("click", toggleSidebar);
 
+        const sidebarLinks = document.querySelectorAll("#sidebar-wrapper .list-group-item-action");
+
+        const activateLink = (element) => {
+            sidebarLinks.forEach(link => link.classList.remove("active-module"));
+            element.classList.add("active-module");
+        };
+
+        sidebarLinks.forEach(link => {
+            if (link.tagName === "A" && link.pathname === window.location.pathname) {
+                activateLink(link);
+            }
+
+            link.addEventListener("click", () => activateLink(link));
+        });
+
         if (typeof desktopQuery.addEventListener === "function") {
             desktopQuery.addEventListener("change", updateSidebarStateForViewport);
         } else if (typeof desktopQuery.addListener === "function") {
