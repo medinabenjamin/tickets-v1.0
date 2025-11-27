@@ -1,5 +1,6 @@
 {% extends 'soporte/base.html' %}
 {% load widget_tweaks %}
+{% load soporte_extras %}
 
 {% block title %}Detalle del Ticket #{{ ticket.id }}{% endblock %}
 
@@ -25,67 +26,69 @@
                                     <span class="badge rounded-pill bg-primary fs-6">{{ ticket.get_estado_display }}</span>
                                 {% else %}
                                     <span class="badge rounded-pill bg-warning text-dark fs-6">{{ ticket.get_estado_display }}</span>
-
                                 {% endif %}
                             </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="fw-bold me-2">Prioridad:</span>
+                                <span class="badge bg-info text-dark fs-6">{{ ticket.prioridad.nombre }}</span>
+                            </div>
                             <p class="mb-2"><span class="fw-bold">Solicitante:</span> {{ ticket.solicitante.username }}</p>
-                            <p class="mb-2"><span class="fw-bold">Técnico asignado:</span> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</p>
-                            <p class="mb-2"><span class="fw-bold">Categoría:</span> {{ ticket.get_categoria_display }}</p>
-                            <p class="mb-2"><span class="fw-bold">Área:</span> {{ ticket.get_area_funcional_display }}</p>
+                            <p class="mb-0"><span class="fw-bold">Técnico asignado:</span> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p class="mb-2"><span class="fw-bold">Prioridad:</span> {{ ticket.prioridad.nombre }}</p>
-                            <p class="mb-2"><span class="fw-bold">Tiempo objetivo de resolución:</span> {{ ticket.prioridad.minutos_resolucion }} minutos</p>
+                            <p class="mb-2"><span class="fw-bold">Fecha de creación:</span> {{ ticket.fecha_creacion|date:"d M Y, H:i" }}</p>
                             <p class="mb-2"><span class="fw-bold">Compromiso de respuesta:</span>
-                                {% if ticket.fecha_compromiso_respuesta %}
-                                    {{ ticket.fecha_compromiso_respuesta|date:"d M Y, H:i" }}
+                                {% if sla_deadline %}
+                                    {{ sla_deadline|date:"d M Y, H:i" }}
                                 {% else %}
                                     <span class="text-muted">No definido</span>
                                 {% endif %}
                             </p>
-                            <p class="mb-2"><span class="fw-bold">Estado SLA:</span>
-                                {% if ticket.estado_sla == ticket.SLA_ESTADO_CUMPLIDO %}
-                                    <span class="badge bg-success">{{ ticket.get_estado_sla_display }}</span>
-                                {% elif ticket.estado_sla == ticket.SLA_ESTADO_VENCIDO %}
-                                    <span class="badge bg-danger">{{ ticket.get_estado_sla_display }}</span>
-                                {% elif ticket.estado_sla == ticket.SLA_ESTADO_PENDIENTE %}
-                                    <span class="badge bg-warning text-dark">{{ ticket.get_estado_sla_display }}</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">{{ ticket.get_estado_sla_display }}</span>
-                                {% endif %}
-                            </p>
-                            <p class="mb-2"><span class="fw-bold">Creado:</span> {{ ticket.fecha_creacion|date:"d M Y, H:i" }}</p>
-                            {% if ticket.fecha_cierre %}
-                                <p class="mb-2"><span class="fw-bold">Cerrado:</span> {{ ticket.fecha_cierre|date:"d M Y, H:i" }}</p>
-                                <p class="mb-0 text-success"><span class="fw-bold">Resolución:</span> {{ ticket.tiempo_resolucion }}</p>
+                            {% if sla_time_left %}
+                                <p class="mb-0"><span class="fw-bold">Tiempo restante del SLA:</span>
+                                    <span class="badge bg-secondary">{{ sla_deadline|countdown }}</span>
+                                </p>
                             {% endif %}
                         </div>
                     </div>
-                    <hr>
-                    <p class="mb-0">{{ ticket.descripcion|linebreaks }}</p>
                 </div>
             </div>
 
             <div class="card-custom mb-4">
                 <div class="card-custom-header">
-                    <i class="fas fa-paperclip"></i> Archivos Adjuntos
+                    <i class="fas fa-info-circle"></i> Detalles del Ticket
                 </div>
                 <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        {% for adjunto in ticket.adjuntos.all %}
-                            <li class="list-group-item">
-                                {% if adjunto.is_image %}
-                                    <div class="mb-2"><strong>{{ adjunto }}</strong> <a href="{{ adjunto.archivo.url }}" target="_blank" class="ms-2 small text-muted">(Ver completo)</a></div>
-                                    <img src="{{ adjunto.archivo.url }}" class="img-fluid rounded border" style="max-width: 250px;" alt="Adjunto">
-                                {% else %}
-                                    <a href="{{ adjunto.archivo.url }}" target="_blank" class="text-decoration-none"><i class="fas fa-file-alt me-2"></i> <strong>{{ adjunto }}</strong></a>
-                                {% endif %}
-                                <small class="text-muted d-block mt-2">Subido por: {{ adjunto.subido_por.username }} el {{ adjunto.fecha_subida|date:"d M Y" }}</small>
-                            </li>
-                        {% empty %}
-                            <li class="list-group-item text-muted">No hay archivos adjuntos en este ticket.</li>
-                        {% endfor %}
-                    </ul>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-2"><span class="fw-bold">Categoría:</span> {{ ticket.get_categoria_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2"><span class="fw-bold">Área:</span> {{ ticket.get_area_funcional_display }}</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Descripción</h6>
+                        <p class="mb-0">{{ ticket.descripcion|linebreaks }}</p>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold">Adjuntos</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for adjunto in adjuntos %}
+                                <li class="list-group-item">
+                                    {% if adjunto.is_image %}
+                                        <div class="mb-2"><strong>{{ adjunto }}</strong> <a href="{{ adjunto.archivo.url }}" target="_blank" class="ms-2 small text-muted">(Ver completo)</a></div>
+                                        <img src="{{ adjunto.archivo.url }}" class="img-fluid rounded border" style="max-width: 250px;" alt="Adjunto">
+                                    {% else %}
+                                        <a href="{{ adjunto.archivo.url }}" target="_blank" class="text-decoration-none"><i class="fas fa-file-alt me-2"></i> <strong>{{ adjunto }}</strong></a>
+                                    {% endif %}
+                                    <small class="text-muted d-block mt-2">Subido por: {{ adjunto.subido_por.username }} el {{ adjunto.fecha_subida|date:"d M Y" }}</small>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-muted">No hay archivos adjuntos en este ticket.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -212,47 +215,6 @@
 
         </div>
         <div class="col-lg-4">
-
-            <div class="card-custom mb-4">
-                <div class="card-custom-header">
-                    <i class="fas fa-info-circle"></i> Detalles del Ticket
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <p class="mb-2"><span class="fw-bold">Solicitante:</span> {{ ticket.solicitante.username }}</p>
-                            <p class="mb-2"><span class="fw-bold">Técnico:</span> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</p>
-                            <p class="mb-2"><span class="fw-bold">Categoría:</span> {{ ticket.get_categoria_display }}</p>
-                            <p class="mb-2"><span class="fw-bold">Área:</span> {{ ticket.get_area_funcional_display }}</p>
-                            <p class="mb-2"><span class="fw-bold">Prioridad:</span> {{ ticket.prioridad.nombre }}</p>
-                            <p class="mb-2"><span class="fw-bold">Tiempo objetivo de resolución:</span> {{ ticket.prioridad.minutos_resolucion }} minutos</p>
-                            <p class="mb-2"><span class="fw-bold">Compromiso de respuesta:</span>
-                                {% if ticket.fecha_compromiso_respuesta %}
-                                    {{ ticket.fecha_compromiso_respuesta|date:"d M Y, H:i" }}
-                                {% else %}
-                                    <span class="text-muted">No definido</span>
-                                {% endif %}
-                            </p>
-                            <p class="mb-2"><span class="fw-bold">Estado SLA:</span>
-                                {% if ticket.estado_sla == ticket.SLA_ESTADO_CUMPLIDO %}
-                                    <span class="badge bg-success">{{ ticket.get_estado_sla_display }}</span>
-                                {% elif ticket.estado_sla == ticket.SLA_ESTADO_VENCIDO %}
-                                    <span class="badge bg-danger">{{ ticket.get_estado_sla_display }}</span>
-                                {% elif ticket.estado_sla == ticket.SLA_ESTADO_PENDIENTE %}
-                                    <span class="badge bg-warning text-dark">{{ ticket.get_estado_sla_display }}</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">{{ ticket.get_estado_sla_display }}</span>
-                                {% endif %}
-                            </p>
-                            <p class="mb-2"><span class="fw-bold">Creado:</span> {{ ticket.fecha_creacion|date:"d M Y, H:i" }}</p>
-                            {% if ticket.fecha_cierre %}
-                                <p class="mb-2"><span class="fw-bold">Cerrado:</span> {{ ticket.fecha_cierre|date:"d M Y, H:i" }}</p>
-                                <p class="mb-0 text-success"><span class="fw-bold">Resolución:</span> {{ ticket.tiempo_resolucion }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {% if request.user.is_staff and ticket.estado != 'cerrado' %}
             <div class="card-custom mb-4">

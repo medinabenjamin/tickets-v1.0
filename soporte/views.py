@@ -15,6 +15,7 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Avg, Count, Max, ProtectedError, Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from .forms import (
     CommentForm,
@@ -177,6 +178,9 @@ def detalle_ticket(request, ticket_id):
     form_acciones = TechTicketForm(instance=ticket)
     comment_form = CommentForm()
     historial = ticket.historial.select_related('actor').all()
+    sla_deadline = getattr(ticket, 'fecha_compromiso_respuesta', None)
+    sla_time_left = sla_deadline - timezone.now() if sla_deadline else None
+    adjuntos = ticket.adjuntos.all() if hasattr(ticket, 'adjuntos') else []
     if request.method == "POST":
         if 'tech_form_submit' in request.POST:
             if not request.user.is_staff:
@@ -184,15 +188,20 @@ def detalle_ticket(request, ticket_id):
             form_acciones = TechTicketForm(request.POST, instance=ticket)
             if form_acciones.is_valid():
                 cleaned = form_acciones.cleaned_data
-                changes = {
-                    'status': cleaned.get('estado'),
-                    'priority': cleaned.get('prioridad'),
-                    'assignee': cleaned.get('tecnico_asignado'),
-                }
-                update_ticket(ticket, request.user, changes)
+                changes = {}
+                if 'estado' in cleaned:
+                    changes['status'] = cleaned.get('estado')
+                if 'prioridad' in cleaned:
+                    changes['priority'] = cleaned.get('prioridad')
+                if 'tecnico_asignado' in cleaned:
+                    changes['assignee'] = cleaned.get('tecnico_asignado')
+                comment = request.POST.get('comentario', '').strip() or None
+                update_ticket(ticket, request.user, changes, comment)
+                messages.success(request, "Ticket actualizado.")
                 return redirect('detalle_ticket', ticket_id=ticket.id)
         elif 'cerrar_ticket_submit' in request.POST and request.user.is_staff:
             update_ticket(ticket, request.user, {'status': 'cerrado'})
+            messages.success(request, "Ticket actualizado.")
             return redirect('detalle_ticket', ticket_id=ticket.id)
         elif 'comment_form_submit' in request.POST:
             comment_form = CommentForm(request.POST, request.FILES)
@@ -212,6 +221,9 @@ def detalle_ticket(request, ticket_id):
         'comment_form': comment_form,
         'form_acciones': form_acciones,
         'historial': historial,
+        'adjuntos': adjuntos,
+        'sla_deadline': sla_deadline,
+        'sla_time_left': sla_time_left,
     }
     return render(request, "soporte/detalle_ticket.html", context)
 

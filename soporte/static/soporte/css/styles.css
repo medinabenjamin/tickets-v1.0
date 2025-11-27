@@ -193,6 +193,11 @@ body {
     gap: .5rem;
 }
 
+.card + .card,
+.card-custom + .card-custom {
+    margin-top: 1rem;
+}
+
 .card-link {
     color: inherit;
     text-decoration: none;
