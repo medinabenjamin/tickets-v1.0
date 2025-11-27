@@ -141,6 +141,8 @@ LOGIN_REDIRECT_URL = 'dashboard_principal'  # Or wherever you redirect after log
 # This is the key line to change
 LOGOUT_REDIRECT_URL = 'login'
 
+TICKETS_PER_PAGE = 6
+
 Q_CLUSTER = {
     'name': 'DjangORM',
     'workers': 4,
