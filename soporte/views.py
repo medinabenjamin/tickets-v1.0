@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import Group, Permission, User
 from django.core.mail import send_mail
-from django.core.paginator import Paginator
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Avg, Count, Max, ProtectedError, Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -36,6 +36,8 @@ from django.template.loader import get_template
 
 # Configura el logger para la aplicación
 logger = logging.getLogger(__name__)
+
+PAGE_SIZE_TICKETS = 10
 
 
 def agrupar_permisos_en_espanol(permisos_qs, permisos_seleccionados):
@@ -126,13 +128,26 @@ def home(request):
     else:
         tickets = tickets.order_by('-fecha_creacion')
 
+    page = request.GET.get('page', 1)
+    paginator = Paginator(tickets, PAGE_SIZE_TICKETS)
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages or 1)
+
     base_querydict = request.GET.copy()
     for param in ['sort', 'dir']:
         if param in base_querydict:
             base_querydict.pop(param)
     base_query = base_querydict.urlencode()
+
+    params = request.GET.copy()
+    params.pop('page', None)
+    preserve_qs = params.urlencode()
     context = {
-        "tickets": tickets,
+        "tickets": page_obj.object_list,
         "estados": Ticket.ESTADO_CHOICES,
         "prioridades": Prioridad.objects.order_by("orden", "nombre"),
         "tecnicos": User.objects.filter(is_staff=True),
@@ -144,6 +159,10 @@ def home(request):
         "dir": direction,
         "direction": direction,
         "base_query": base_query,
+        "page_obj": page_obj,
+        "paginator": paginator,
+        "is_paginated": page_obj.has_other_pages(),
+        "preserve_qs": preserve_qs,
     }
     return render(request, "soporte/home.html", context)
 

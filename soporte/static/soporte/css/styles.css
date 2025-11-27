@@ -185,6 +185,10 @@ body {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
 }
 
+.table-footer-pagination {
+    margin-top: .5rem;
+}
+
 .border-left-primary { border-left: .25rem solid #0d6efd; }
 .border-left-danger { border-left: .25rem solid #dc3545; }
 .border-left-warning { border-left: .25rem solid #f6c23e; }
