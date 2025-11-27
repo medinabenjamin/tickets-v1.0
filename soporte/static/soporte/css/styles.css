@@ -90,10 +90,10 @@ body {
 }
 
 #sidebarHeadingToggle.floating-toggle {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    background-color: var(--header-bg);
+    background-color: #e7eaee;
     border-radius: 0 1rem 1rem 0;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
     z-index: 1030;
@@ -111,9 +111,9 @@ body {
     width: var(--toggle-size);
     height: var(--toggle-size);
     border-radius: var(--toggle-radius);
-    background: #ffffff;
+    background: #f0f2f5;
     color: #212529;
-    border-color: #ffffff;
+    border-color: #f0f2f5;
     box-shadow: 0 10px 18px rgba(0, 0, 0, 0.08);
 }
 
