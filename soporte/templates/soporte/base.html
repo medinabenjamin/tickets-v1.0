@@ -59,9 +59,9 @@
                             <span class="nav-link">Bienvenido, {{ request.user.username }}</span>
                         </li>
                     </ul>
-                    <a href="{% url 'dashboard_principal' %}" class="navbar-brand main-navbar-brand d-inline-flex align-items-center justify-content-center gap-2 position-absolute top-50 start-50 translate-middle">
-                        <img src="{% static 'soporte/solveit-desk.png' %}" alt="SolveIT Desk" class="sidebar-logo">
-                        <span>SolveIT Desk</span>
+                    <a href="{% url 'dashboard_principal' %}" class="navbar-brand main-navbar-brand d-flex align-items-center justify-content-center gap-2 position-absolute top-50 start-50 translate-middle">
+                        <img src="{% static 'soporte/solveit-desk.png' %}" alt="SolveIT Desk" class="brand-logo">
+                        <span class="brand-text">SolveIT Desk</span>
                     </a>
                 </div>
             </nav>
