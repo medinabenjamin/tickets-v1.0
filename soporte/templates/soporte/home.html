@@ -157,6 +157,39 @@
                     </tbody>
                 </table>
             </div>
+            {% if is_paginated %}
+            <div class="table-footer-pagination d-flex justify-content-between align-items-center mt-2">
+                <div class="text-muted small">
+                    Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ paginator.count }} tickets
+                </div>
+                <nav aria-label="Paginación">
+                    <ul class="pagination mb-0">
+                        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                            <a class="page-link"
+                               href="?{% if preserve_qs %}{{ preserve_qs }}&{% endif %}{% if page_obj.has_previous %}page={{ page_obj.previous_page_number }}{% else %}page=1{% endif %}"
+                               tabindex="-1">Anterior</a>
+                        </li>
+
+                        {% for p in page_obj.paginator.page_range %}
+                            {% if p == page_obj.number %}
+                                <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                            {% elif p >= page_obj.number|add:'-2' and p <= page_obj.number|add:'2' or p == 1 or p == paginator.num_pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if preserve_qs %}{{ preserve_qs }}&{% endif %}page={{ p }}">{{ p }}</a>
+                                </li>
+                            {% elif p == page_obj.number|add:'-3' or p == page_obj.number|add:'3' %}
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                            <a class="page-link"
+                               href="?{% if preserve_qs %}{{ preserve_qs }}&{% endif %}{% if page_obj.has_next %}page={{ page_obj.next_page_number }}{% else %}page={{ page_obj.number }}{% endif %}">Siguiente</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
