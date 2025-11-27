@@ -6,10 +6,10 @@ from collections import defaultdict
 
 from django.conf import settings
 from django.contrib import messages # <--- IMPORTACIÓN AÑADIDA
-from django.contrib.auth import logout, update_session_auth_hash
+from django.contrib.auth import get_user_model, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import Group, Permission
 from django.core.mail import send_mail
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Avg, Count, Max, ProtectedError, Q
@@ -26,6 +26,7 @@ from .forms import (
     UserUpdateForm,
 )
 from .models import Adjunto, Comment, Prioridad, Ticket
+from .services import log_attachment, update_ticket
 from .utils.permissions import (
     get_app_verbose_name,
     spanish_permission_label,
@@ -38,6 +39,7 @@ from django.template.loader import get_template
 logger = logging.getLogger(__name__)
 
 PAGE_SIZE_TICKETS = getattr(settings, "TICKETS_PER_PAGE", 6)
+User = get_user_model()
 
 
 def agrupar_permisos_en_espanol(permisos_qs, permisos_seleccionados):
@@ -174,20 +176,23 @@ def detalle_ticket(request, ticket_id):
     comments = _comentarios_ticket(ticket)
     form_acciones = TechTicketForm(instance=ticket)
     comment_form = CommentForm()
+    historial = ticket.historial.select_related('actor').all()
     if request.method == "POST":
         if 'tech_form_submit' in request.POST:
             if not request.user.is_staff:
                 return HttpResponseForbidden()
             form_acciones = TechTicketForm(request.POST, instance=ticket)
             if form_acciones.is_valid():
-                prioridad_cambiada = 'prioridad' in form_acciones.changed_data
-                form_acciones.save()
-                if prioridad_cambiada:
-                    ticket.refresh_from_db(fields=['fecha_compromiso_respuesta', 'estado_sla'])
+                cleaned = form_acciones.cleaned_data
+                changes = {
+                    'status': cleaned.get('estado'),
+                    'priority': cleaned.get('prioridad'),
+                    'assignee': cleaned.get('tecnico_asignado'),
+                }
+                update_ticket(ticket, request.user, changes)
                 return redirect('detalle_ticket', ticket_id=ticket.id)
         elif 'cerrar_ticket_submit' in request.POST and request.user.is_staff:
-            ticket.estado = 'cerrado'
-            ticket.save()
+            update_ticket(ticket, request.user, {'status': 'cerrado'})
             return redirect('detalle_ticket', ticket_id=ticket.id)
         elif 'comment_form_submit' in request.POST:
             comment_form = CommentForm(request.POST, request.FILES)
@@ -196,6 +201,9 @@ def detalle_ticket(request, ticket_id):
                 new_comment.ticket = ticket
                 new_comment.author = request.user
                 new_comment.save()
+                update_ticket(ticket, request.user, {}, comment=new_comment.text)
+                if new_comment.adjunto:
+                    log_attachment(ticket, request.user, new_comment.adjunto)
                 if ticket.solicitante != request.user:
                     pass # Lógica de notificación
                 return redirect('detalle_ticket', ticket_id=ticket.id)
@@ -203,6 +211,7 @@ def detalle_ticket(request, ticket_id):
         'ticket': ticket, 'comments': comments,
         'comment_form': comment_form,
         'form_acciones': form_acciones,
+        'historial': historial,
     }
     return render(request, "soporte/detalle_ticket.html", context)
 
@@ -245,7 +254,8 @@ def crear_ticket(request):
             ticket.save()
             archivo_adjunto = form.cleaned_data.get('adjunto')
             if archivo_adjunto:
-                Adjunto.objects.create(ticket=ticket, archivo=archivo_adjunto, subido_por=request.user)
+                adjunto = Adjunto.objects.create(ticket=ticket, archivo=archivo_adjunto, subido_por=request.user)
+                log_attachment(ticket, request.user, adjunto.archivo)
             return redirect('home_tickets')
     else:
         form = TicketForm(user=request.user)
@@ -257,7 +267,15 @@ def editar_ticket(request, ticket_id):
     if request.method == "POST":
         form = TicketForm(request.POST, instance=ticket)
         if form.is_valid():
-            form.save()
+            cleaned = form.cleaned_data
+            changes = {
+                'title': cleaned.get('titulo'),
+                'description': cleaned.get('descripcion'),
+                'category': cleaned.get('categoria'),
+                'area': cleaned.get('area_funcional'),
+                'priority': cleaned.get('prioridad'),
+            }
+            update_ticket(ticket, request.user, changes)
             return redirect('detalle_ticket', ticket_id=ticket.id)
     else:
         form = TicketForm(instance=ticket)

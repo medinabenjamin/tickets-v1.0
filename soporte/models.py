@@ -2,11 +2,15 @@
 import os
 from datetime import timedelta
 
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+User = get_user_model()
 
 
 class Prioridad(models.Model):
@@ -289,6 +293,44 @@ class Adjunto(models.Model):
     def is_image(self):
         image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
         return any(self.archivo.name.lower().endswith(ext) for ext in image_extensions)
+
+
+class TicketHistory(models.Model):
+    class Action(models.TextChoices):
+        STATUS = "STATUS", _("Estado")
+        PRIORITY = "PRIORITY", _("Prioridad")
+        ASSIGNEE = "ASSIGNEE", _("Técnico")
+        TITLE = "TITLE", _("Título")
+        DESCRIPTION = "DESCRIPTION", _("Descripción")
+        CATEGORY = "CATEGORY", _("Categoría")
+        AREA = "AREA", _("Área")
+        ATTACH_ADD = "ATTACH_ADD", _("Adjunto agregado")
+        ATTACH_DEL = "ATTACH_DEL", _("Adjunto eliminado")
+        COMMENT = "COMMENT", _("Comentario")
+
+    ticket = models.ForeignKey('soporte.Ticket', on_delete=models.CASCADE, related_name='historial')
+    actor = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='acciones_tickets',
+    )
+    action = models.CharField(max_length=20, choices=Action.choices)
+    field = models.CharField(max_length=30, blank=True, default="")
+    old_value = models.TextField(blank=True, default="")
+    new_value = models.TextField(blank=True, default="")
+    metadata = models.JSONField(blank=True, default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['ticket', 'created_at']),
+            models.Index(fields=['ticket', 'action']),
+        ]
+        verbose_name = "Historial de ticket"
+        verbose_name_plural = "Historial de tickets"
 
 
 class RoleInfo(models.Model):
