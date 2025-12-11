@@ -32,7 +32,13 @@
                                 <span class="fw-bold me-2">Prioridad:</span>
                                 <span class="badge bg-info text-dark fs-6">{{ ticket.prioridad.nombre }}</span>
                             </div>
-                            <p class="mb-2"><span class="fw-bold">Solicitante:</span> {{ ticket.solicitante.username }}</p>
+                            <p class="mb-2">
+                                <span class="fw-bold">Solicitante:</span>
+                                {{ ticket.solicitante.username }}
+                                {% if ticket.solicitante_critico %}
+                                    <span class="badge bg-danger ms-2">Crítico</span>
+                                {% endif %}
+                            </p>
                             <p class="mb-0"><span class="fw-bold">Técnico asignado:</span> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</p>
                         </div>
                         <div class="col-md-6">

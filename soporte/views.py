@@ -26,7 +26,7 @@ from .forms import (
     UserCreateForm,
     UserUpdateForm,
 )
-from .models import Adjunto, Comment, Prioridad, Ticket
+from .models import Adjunto, Comment, PerfilUsuario, Prioridad, Ticket
 from .services import log_attachment, update_ticket
 from .utils.permissions import (
     get_app_verbose_name,
@@ -123,13 +123,17 @@ def home(request):
         'fecha_creacion': 'fecha_creacion',
     }
 
+    order_by_fields = ['-solicitante_critico']
     if sort in sort_map:
         order_field = sort_map[sort]
         if direction == 'desc':
             order_field = '-' + order_field
-        tickets = tickets.order_by(order_field, '-fecha_creacion')
+        order_by_fields.append(order_field)
+        order_by_fields.append('-fecha_creacion')
     else:
-        tickets = tickets.order_by('-fecha_creacion')
+        order_by_fields.extend(['prioridad__orden', '-fecha_creacion'])
+
+    tickets = tickets.order_by(*order_by_fields)
 
     page = request.GET.get('page', 1)
     paginator = Paginator(tickets, PAGE_SIZE_TICKETS)
@@ -259,6 +263,10 @@ def crear_ticket(request):
         if form.is_valid():
             ticket = form.save(commit=False)
             ticket.solicitante = request.user
+            try:
+                ticket.solicitante_critico = request.user.perfil.es_critico
+            except (AttributeError, PerfilUsuario.DoesNotExist):
+                ticket.solicitante_critico = False
             ticket.estado = 'abierto'
             tecnico_disponible = User.objects.filter(is_staff=True).order_by('?').first()
             if tecnico_disponible:

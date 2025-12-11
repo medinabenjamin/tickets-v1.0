@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import Group, User
 from django.utils.text import slugify
 
-from .models import Adjunto, Comment, Prioridad, RoleInfo, Ticket
+from .models import Adjunto, Comment, PerfilUsuario, Prioridad, RoleInfo, Ticket
 
 
 class TicketForm(forms.ModelForm):
@@ -183,6 +183,11 @@ class UserCreateForm(forms.ModelForm):
         widget=forms.PasswordInput,
         label="Confirmar contraseña",
     )
+    es_critico = forms.BooleanField(
+        required=False,
+        label="Usuario crítico",
+        help_text="Si está activo, los tickets creados por este usuario se destacarán en la lista.",
+    )
     groups = forms.ModelMultipleChoiceField(
         queryset=Group.objects.all().order_by("name"),
         required=False,
@@ -193,7 +198,7 @@ class UserCreateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'groups']
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'es_critico', 'groups']
         field_classes = {'username': UsernameField}
         labels = {
             'username': 'Nombre de usuario',
@@ -218,11 +223,16 @@ class UserCreateForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
+        es_critico = self.cleaned_data.get('es_critico', False)
         if commit:
             user.save()
             groups = self.cleaned_data.get('groups')
             if groups is not None:
                 user.groups.set(groups)
+            perfil, _ = PerfilUsuario.objects.get_or_create(user=user)
+            if perfil.es_critico != es_critico:
+                perfil.es_critico = es_critico
+                perfil.save(update_fields=['es_critico'])
         return user
 
 
@@ -240,6 +250,11 @@ class UserUpdateForm(forms.ModelForm):
         label="Confirmar contraseña",
         required=False,
     )
+    es_critico = forms.BooleanField(
+        required=False,
+        label="Usuario crítico",
+        help_text="Los tickets del usuario aparecerán destacados si esta opción está marcada.",
+    )
     groups = forms.ModelMultipleChoiceField(
         queryset=Group.objects.all().order_by("name"),
         required=False,
@@ -250,7 +265,7 @@ class UserUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'groups']
+        fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'es_critico', 'groups']
         field_classes = {'username': UsernameField}
         labels = {
             'username': 'Nombre de usuario',
@@ -264,6 +279,11 @@ class UserUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.fields['groups'].initial = self.instance.groups.all()
+            try:
+                self.fields['es_critico'].initial = self.instance.perfil.es_critico
+            except PerfilUsuario.DoesNotExist:
+                PerfilUsuario.objects.get_or_create(user=self.instance)
+                self.fields['es_critico'].initial = False
 
     def clean(self):
         cleaned_data = super().clean()
@@ -277,6 +297,7 @@ class UserUpdateForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         password = self.cleaned_data.get('password')
+        es_critico = self.cleaned_data.get('es_critico', False)
         if password:
             user.set_password(password)
         if commit:
@@ -284,4 +305,9 @@ class UserUpdateForm(forms.ModelForm):
             groups = self.cleaned_data.get('groups')
             if groups is not None:
                 user.groups.set(groups)
+            perfil, _ = PerfilUsuario.objects.get_or_create(user=user)
+            if perfil.es_critico != es_critico:
+                perfil.es_critico = es_critico
+                perfil.save(update_fields=['es_critico'])
+            Ticket.objects.filter(solicitante=user).update(solicitante_critico=es_critico)
         return user
