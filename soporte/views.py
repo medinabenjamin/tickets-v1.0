@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .forms import (
+    AreaForm,
     CommentForm,
     PrioridadForm,
     RoleForm,
@@ -26,7 +27,7 @@ from .forms import (
     UserCreateForm,
     UserUpdateForm,
 )
-from .models import Adjunto, Comment, PerfilUsuario, Prioridad, Ticket
+from .models import Adjunto, Area, Comment, PerfilUsuario, Prioridad, Ticket
 from .services import log_attachment, update_ticket
 from .utils.permissions import (
     get_app_verbose_name,
@@ -111,7 +112,7 @@ def home(request):
     search_query = request.GET.get('search') or request.GET.get('q')
     if search_query:
         tickets_list = tickets_list.filter(Q(titulo__icontains=search_query) | Q(descripcion__icontains=search_query))
-    tickets = tickets_list.select_related('prioridad', 'solicitante', 'tecnico_asignado')
+    tickets = tickets_list.select_related('prioridad', 'solicitante', 'tecnico_asignado', 'area_funcional')
 
     sort = request.GET.get('sort')
     direction = request.GET.get('dir', 'asc')
@@ -337,7 +338,7 @@ def dashboard(request):
         .order_by('estado_sla')
     )
     tickets_recientes = (
-        Ticket.objects.select_related('prioridad', 'solicitante')
+        Ticket.objects.select_related('prioridad', 'solicitante', 'area_funcional')
         .all()
         .order_by('-fecha_creacion')[:5]
     )
@@ -457,6 +458,72 @@ def eliminar_prioridad_sla(request, prioridad_id):
             'prioridad': prioridad,
         },
     )
+
+
+# --- MÓDULO DE ÁREAS ---
+
+
+@login_required
+@user_passes_test(es_personal_sla)
+def lista_areas(request):
+    areas = Area.objects.order_by("orden", "nombre")
+    return render(request, 'soporte/area_list.html', {'areas': areas})
+
+
+@login_required
+@user_passes_test(es_personal_sla)
+def crear_area(request):
+    if request.method == 'POST':
+        form = AreaForm(request.POST)
+        if form.is_valid():
+            area = form.save()
+            messages.success(request, f"Área '{area.nombre}' creada correctamente.")
+            return redirect('areas')
+    else:
+        next_order = Area.objects.aggregate(max_orden=Max('orden')).get('max_orden') or 0
+        form = AreaForm(initial={'orden': next_order + 1})
+    return render(request, 'soporte/area_form.html', {'form': form, 'titulo': 'Crear área'})
+
+
+@login_required
+@user_passes_test(es_personal_sla)
+def editar_area(request, area_id):
+    area = get_object_or_404(Area, id=area_id)
+    if request.method == 'POST':
+        form = AreaForm(request.POST, instance=area)
+        if form.is_valid():
+            area_actualizada = form.save()
+            messages.success(
+                request,
+                f"Área '{area_actualizada.nombre}' actualizada correctamente.",
+            )
+            return redirect('areas')
+    else:
+        form = AreaForm(instance=area)
+    return render(
+        request,
+        'soporte/area_form.html',
+        {'form': form, 'titulo': 'Editar área', 'area': area},
+    )
+
+
+@login_required
+@user_passes_test(es_personal_sla)
+def eliminar_area(request, area_id):
+    area = get_object_or_404(Area, id=area_id)
+    if request.method == 'POST':
+        nombre = area.nombre
+        try:
+            area.delete()
+        except ProtectedError:
+            messages.error(
+                request,
+                "No es posible eliminar el área porque existen tickets asociados.",
+            )
+        else:
+            messages.success(request, f"Área '{nombre}' eliminada correctamente.")
+        return redirect('areas')
+    return render(request, 'soporte/area_confirm_delete.html', {'area': area})
 
 # --- VISTAS DE MANTENEDOR (¡ACTUALIZADAS!) ---
 
@@ -727,7 +794,7 @@ def exportar_tickets_csv(request):
             ticket.tecnico_asignado.username if ticket.tecnico_asignado else '-',
             ticket.get_estado_display(), ticket.prioridad.nombre,
             ticket.get_categoria_display(), ticket.get_tipo_ticket_display(),
-            ticket.get_area_funcional_display(),
+            ticket.area_funcional.nombre,
             ticket.fecha_creacion.strftime('%Y-%m-%d %H:%M'),
             str(ticket.tiempo_resolucion).split('.')[0] if ticket.tiempo_resolucion else '-'
         ])

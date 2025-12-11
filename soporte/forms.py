@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import Group, User
 from django.utils.text import slugify
 
-from .models import Adjunto, Comment, PerfilUsuario, Prioridad, RoleInfo, Ticket
+from .models import Adjunto, Area, Comment, PerfilUsuario, Prioridad, RoleInfo, Ticket
 
 
 class TicketForm(forms.ModelForm):
@@ -39,6 +39,14 @@ class TicketForm(forms.ModelForm):
             if default_prioridad:
                 self.fields['prioridad'].initial = default_prioridad
 
+        areas_qs = Area.objects.order_by("orden", "nombre")
+        self.fields['area_funcional'].queryset = areas_qs
+        self.fields['area_funcional'].empty_label = None
+        if not self.instance.pk and not self.initial.get('area_funcional'):
+            default_area = areas_qs.first()
+            if default_area:
+                self.fields['area_funcional'].initial = default_area
+
         if self.user and not self.user.is_staff:
             hidden_fields = [
                 'categoria',
@@ -57,6 +65,10 @@ class TicketForm(forms.ModelForm):
                 default_prioridad = prioridades_qs.first()
                 if default_prioridad:
                     self.fields['prioridad'].initial = default_prioridad
+            if 'area_funcional' in self.fields and not self.fields['area_funcional'].initial:
+                default_area = areas_qs.first()
+                if default_area:
+                    self.fields['area_funcional'].initial = default_area
 
     def clean(self):
         cleaned_data = super().clean()
@@ -74,6 +86,11 @@ class TicketForm(forms.ModelForm):
                     or prioridades_qs.first()
                 )
                 cleaned_data['prioridad'] = prioridad_default
+            if 'area_funcional' in self.fields and not cleaned_data.get('area_funcional'):
+                cleaned_data['area_funcional'] = (
+                    self.fields['area_funcional'].initial
+                    or self.fields['area_funcional'].queryset.first()
+                )
         return cleaned_data
 
 
@@ -108,6 +125,25 @@ class PrioridadForm(forms.ModelForm):
             "nombre",
             "clave",
             "minutos_resolucion",
+            "orden",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            existing_class = field.widget.attrs.get('class', '')
+            clases = f"{existing_class} form-control".strip()
+            field.widget.attrs['class'] = clases
+
+
+class AreaForm(forms.ModelForm):
+    """Formulario para crear y actualizar áreas funcionales."""
+
+    class Meta:
+        model = Area
+        fields = [
+            "nombre",
+            "clave",
             "orden",
         ]
 
