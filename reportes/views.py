@@ -2,6 +2,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count, Q
+from django.db.models.functions import ExtractHour, TruncDate
 from soporte.models import Ticket
 from django.contrib.auth.models import User
 
@@ -107,6 +108,42 @@ def dashboard_reportes(request):
         item['percentage'] = percentage
         item['percentage_display'] = f"{percentage:.2f}"
 
+    # 5. Tickets cerrados por día
+    tickets_cerrados_por_dia_qs = (
+        Ticket.objects.filter(estado__in=['resuelto', 'cerrado'], fecha_cierre__isnull=False)
+        .annotate(day=TruncDate('fecha_cierre'))
+        .values('day')
+        .annotate(total=Count('id'))
+        .order_by('day')
+    )
+    tickets_cerrados_por_dia = {
+        'labels': [item['day'].strftime('%Y-%m-%d') for item in tickets_cerrados_por_dia_qs],
+        'data': [item['total'] for item in tickets_cerrados_por_dia_qs],
+    }
+
+    # 6. Heatmap de creación por hora del día
+    tickets_por_hora_qs = (
+        Ticket.objects.annotate(hour=ExtractHour('fecha_creacion'))
+        .values('hour')
+        .annotate(total=Count('id'))
+        .order_by('hour')
+    )
+
+    tickets_por_hora_dict = {item['hour']: item['total'] for item in tickets_por_hora_qs}
+    max_por_hora = max(tickets_por_hora_dict.values(), default=0)
+    heatmap_por_hora = []
+
+    for hour in range(24):
+        total = tickets_por_hora_dict.get(hour, 0)
+        intensidad = total / max_por_hora if max_por_hora else 0
+        heatmap_por_hora.append(
+            {
+                'hora': hour,
+                'total': total,
+                'intensidad': intensidad,
+            }
+        )
+
     context = {
         'avg_resolution_time_global': avg_resolution_time_global,
         'resolution_by_tech': resolution_by_tech,
@@ -116,5 +153,7 @@ def dashboard_reportes(request):
             'labels': estados_labels,
             'data': estados_data,
         },
+        'tickets_cerrados_por_dia': tickets_cerrados_por_dia,
+        'heatmap_por_hora': heatmap_por_hora,
     }
     return render(request, 'reportes/dashboard_reportes.html', context)
