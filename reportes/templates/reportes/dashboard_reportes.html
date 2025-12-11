@@ -96,6 +96,37 @@
             </div>
         </div>
     </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-dark text-white py-3">
+                    <h6 class="m-0 fw-bold"><i class="fas fa-calendar-check me-2"></i>Tickets cerrados por día</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chart-cerrados-por-dia"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-dark text-white py-3">
+                    <h6 class="m-0 fw-bold"><i class="fas fa-fire-alt me-2"></i>Heatmap de creación por hora</h6>
+                </div>
+                <div class="card-body">
+                    <div class="heatmap-grid" aria-label="Heatmap por hora">
+                        {% for punto in heatmap_por_hora %}
+                            <div class="heatmap-cell" title="{{ punto.hora }}:00 - {{ punto.total }} tickets" style="--intensidad: {{ punto.intensidad }}">
+                                <span class="heatmap-hour">{{ punto.hora }}h</span>
+                                <span class="heatmap-count">{{ punto.total }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <p class="text-muted small mb-0">Entre más oscuro, mayor número de tickets creados en esa hora.</p>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <div class="card shadow border-0">
         <div class="card-header bg-dark text-white">
@@ -147,10 +178,12 @@
 </div>
 
 {{ estados_chart_data|json_script:"estados-chart-data" }}
+{{ tickets_cerrados_por_dia|json_script:"cerrados-dia-chart-data" }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const estadosChartData = JSON.parse(document.getElementById('estados-chart-data').textContent);
+        const cerradosPorDiaData = JSON.parse(document.getElementById('cerrados-dia-chart-data').textContent);
         
         new Chart(document.getElementById('chart-estados'), {
             type: 'doughnut',
@@ -173,6 +206,37 @@
                 }
             },
         });
+
+        new Chart(document.getElementById('chart-cerrados-por-dia'), {
+            type: 'line',
+            data: {
+                labels: cerradosPorDiaData.labels,
+                datasets: [{
+                    label: 'Tickets cerrados',
+                    data: cerradosPorDiaData.data,
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }],
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    }
+                }
+            },
+        });
     });
 </script>
 
@@ -183,5 +247,28 @@
     .text-gray-300 { color: #dddfeb !important; }
     .text-gray-800 { color: #5a5c69 !important; }
     .fw-bold { font-weight: 700 !important; } /* Corregido de font-weight-bold */
+    .heatmap-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 8px;
+    }
+    .heatmap-cell {
+        padding: 8px;
+        border-radius: 8px;
+        background-color: rgba(78, 115, 223, calc(0.15 + (var(--intensidad) * 0.85)));
+        color: #0a0a0a;
+        text-align: center;
+        min-height: 70px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .heatmap-hour {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .heatmap-count {
+        font-size: 1.1rem;
+    }
 </style>
 {% endblock %}
