@@ -10,6 +10,8 @@
 body {
     overflow-x: hidden;
     background-color: #f5f6fa;
+    padding-top: var(--header-h);
+    min-height: 100vh;
 }
 
 /* Contenedor de marca alineado */
