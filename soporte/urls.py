@@ -36,4 +36,10 @@ urlpatterns = [
     path('sla/prioridades/nueva/', views.crear_prioridad_sla, name='sla_prioridad_crear'),
     path('sla/prioridades/<int:prioridad_id>/editar/', views.editar_prioridad_sla, name='sla_prioridad_editar'),
     path('sla/prioridades/<int:prioridad_id>/eliminar/', views.eliminar_prioridad_sla, name='sla_prioridad_eliminar'),
+
+    # Gestión de Áreas
+    path('areas/', views.lista_areas, name='areas'),
+    path('areas/nueva/', views.crear_area, name='area_crear'),
+    path('areas/<int:area_id>/editar/', views.editar_area, name='area_editar'),
+    path('areas/<int:area_id>/eliminar/', views.eliminar_area, name='area_eliminar'),
 ]

@@ -68,7 +68,7 @@
                     <p><strong>Título:</strong> {{ ticket.titulo }}</p>
                     <p><strong>Solicitante:</strong> {{ ticket.solicitante.username }}</p>
                     <p><strong>Técnico Asignado:</strong> {{ ticket.tecnico_asignado.username|default:"No asignado" }}</p>
-                    <p><strong>Área Solicitante:</strong> {{ ticket.get_area_funcional_display }}</p>
+                    <p><strong>Área Solicitante:</strong> {{ ticket.area_funcional.nombre }}</p>
                 </div>
                 <div class="col-md-6">
                     <p><strong>Estado:</strong> {{ ticket.get_estado_display }}</p>

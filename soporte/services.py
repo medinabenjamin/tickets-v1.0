@@ -133,8 +133,8 @@ def update_ticket(ticket, actor, changes: dict, comment: str = None):
                 actor,
                 TicketHistory.Action.AREA,
                 'area_funcional',
-                _display_from_choices(ticket.AREA_CHOICES, old),
-                _display_from_choices(ticket.AREA_CHOICES, new),
+                getattr(old, 'nombre', old),
+                getattr(new, 'nombre', new),
             )
             ticket.area_funcional = new
 

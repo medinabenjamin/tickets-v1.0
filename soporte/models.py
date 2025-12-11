@@ -66,18 +66,36 @@ class Prioridad(models.Model):
         return self.nombre
 
 
+class Area(models.Model):
+    """Áreas funcionales desde las que se levantan tickets."""
+
+    clave = models.SlugField(
+        max_length=50,
+        unique=True,
+        verbose_name="Identificador",
+        help_text=(
+            "Nombre corto sin espacios usado internamente para referirse al área. "
+            "Por ejemplo: 'finanzas', 'rrhh', 'marketing'."
+        ),
+    )
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre")
+    orden = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Orden",
+        help_text="Se utiliza para ordenar las áreas en los listados y selectores.",
+    )
+
+    class Meta:
+        ordering = ["orden", "nombre"]
+        verbose_name = "Área funcional"
+        verbose_name_plural = "Áreas funcionales"
+
+    def __str__(self):
+        return self.nombre
+
+
 class Ticket(models.Model):
     """Ticket de soporte con información de SLA."""
-
-    AREA_CHOICES = [
-        ('finanzas', 'Finanzas'),
-        ('rrhh', 'Recursos Humanos (RRHH)'),
-        ('ventas', 'Ventas'),
-        ('marketing', 'Marketing'),
-        ('produccion', 'Producción/Operaciones'),
-        ('ti', 'Tecnología de la Información (TI)'),
-        ('general', 'General/Administración'),
-    ]
 
     CATEGORIA_CHOICES = [
         ('soporte', 'Soporte Técnico'),
@@ -141,10 +159,10 @@ class Ticket(models.Model):
         default='incidencia',
         verbose_name="Tipo de Ticket",
     )
-    area_funcional = models.CharField(
-        max_length=20,
-        choices=AREA_CHOICES,
-        default='general',
+    area_funcional = models.ForeignKey(
+        Area,
+        on_delete=models.PROTECT,
+        related_name="tickets",
         verbose_name="Área Solicitante",
     )
 
