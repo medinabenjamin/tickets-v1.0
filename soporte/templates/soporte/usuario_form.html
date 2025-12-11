@@ -90,10 +90,20 @@
                             <div class="invalid-feedback d-block">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    <div class="col-12 col-md-4 d-flex align-items-end">
+                    <div class="col-12 col-md-2 d-flex align-items-end">
                         <div class="form-check form-switch">
                             {% render_field form.is_active class="form-check-input" %}
                             <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Activo</label>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-2 d-flex align-items-end">
+                        <div class="form-check form-switch">
+                            {% render_field form.es_critico class="form-check-input" %}
+                            <label class="form-check-label" for="{{ form.es_critico.id_for_label }}">Usuario crítico</label>
+                            {% if form.es_critico.help_text %}<div class="form-text">{{ form.es_critico.help_text }}</div>{% endif %}
+                            {% for error in form.es_critico.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>

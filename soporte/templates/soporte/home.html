@@ -108,7 +108,7 @@
                     </thead>
                     <tbody>
                         {% for ticket in page_obj %}
-                        <tr>
+                        <tr class="{% if ticket.solicitante_critico %}table-warning{% endif %}">
                             <td>#{{ ticket.id }}</td>
                             <td>
                                 <a href="{% url 'detalle_ticket' ticket.id %}"><strong>{{ ticket.titulo }}</strong></a>
@@ -137,7 +137,12 @@
                                     <span class="badge rounded-pill bg-light text-dark">{{ ticket.get_estado_display }}</span>
                                 {% endif %}
                             </td>
-                            <td>{{ ticket.solicitante.username }}</td>
+                            <td>
+                                {{ ticket.solicitante.username }}
+                                {% if ticket.solicitante_critico %}
+                                    <span class="badge bg-danger ms-2">Crítico</span>
+                                {% endif %}
+                            </td>
                             <td>{{ ticket.tecnico_asignado.username|default:"-" }}</td>
                             <td>{{ ticket.fecha_creacion|date:"d M Y, H:i" }}</td>
                             <td class="text-end">

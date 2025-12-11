@@ -13,6 +13,27 @@ from django.utils.translation import gettext_lazy as _
 User = get_user_model()
 
 
+class PerfilUsuario(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="perfil",
+        verbose_name="Usuario",
+    )
+    es_critico = models.BooleanField(
+        default=False,
+        verbose_name="Usuario crítico",
+        help_text="Si está marcado, los tickets de este usuario tendrán prioridad visible.",
+    )
+
+    class Meta:
+        verbose_name = "Perfil de usuario"
+        verbose_name_plural = "Perfiles de usuario"
+
+    def __str__(self):
+        return f"Perfil de {self.user.username}"
+
+
 class Prioridad(models.Model):
     """Nivel de prioridad disponible para los tickets."""
 
@@ -92,6 +113,12 @@ class Ticket(models.Model):
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField()
     solicitante = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tickets")
+    solicitante_critico = models.BooleanField(
+        default=False,
+        db_index=True,
+        verbose_name="Solicitante crítico",
+        help_text="Indica si el solicitante es marcado como crítico al momento de registrar el ticket.",
+    )
     tecnico_asignado = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -142,6 +169,8 @@ class Ticket(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        if self.solicitante_id:
+            self.solicitante_critico = self._obtener_estado_critico_solicitante()
         if self.estado in ['resuelto', 'cerrado'] and not self.fecha_cierre:
             self.fecha_cierre = timezone.now()
             if self.fecha_creacion:
@@ -192,6 +221,13 @@ class Ticket(models.Model):
         fecha_compromiso = base_datetime + timedelta(minutes=minutos_objetivo)
         estado_sla = self._determinar_estado_sla(fecha_compromiso)
         return regla, minutos_objetivo, fecha_compromiso, estado_sla
+
+    def _obtener_estado_critico_solicitante(self):
+        try:
+            return self.solicitante.perfil.es_critico
+        except (AttributeError, PerfilUsuario.DoesNotExist):
+            perfil, _ = PerfilUsuario.objects.get_or_create(user=self.solicitante)
+            return perfil.es_critico
 
     def _obtener_regla_sla(self):
         if not self.prioridad or not self.tipo_ticket:
@@ -331,6 +367,14 @@ class TicketHistory(models.Model):
         ]
         verbose_name = "Historial de ticket"
         verbose_name_plural = "Historial de tickets"
+
+
+@receiver(post_save, sender=User)
+def crear_perfil_usuario(sender, instance, created, **kwargs):
+    if created:
+        PerfilUsuario.objects.create(user=instance)
+    else:
+        PerfilUsuario.objects.get_or_create(user=instance)
 
 
 class RoleInfo(models.Model):
