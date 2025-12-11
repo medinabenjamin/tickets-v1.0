@@ -86,9 +86,11 @@
 
           function setHeaderMetrics(){
             if(!nav) return;
-            const h = nav.getBoundingClientRect().height || nav.offsetHeight || 56;
-            document.documentElement.style.setProperty('--header-h', h + 'px');
-            document.body.style.paddingTop = h + 'px';
+            const rawHeight = nav.getBoundingClientRect().height || nav.offsetHeight || 56;
+            const normalizedHeight = Math.min(Math.max(Math.round(rawHeight), 56), 120);
+
+            document.documentElement.style.setProperty('--header-h', normalizedHeight + 'px');
+            document.body.style.paddingTop = normalizedHeight + 'px';
           }
 
           function syncViewport(){
