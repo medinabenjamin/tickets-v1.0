@@ -105,7 +105,11 @@
                 </div>
                 <div class="heatmap-grid" aria-label="Heatmap por hora">
                     {% for punto in heatmap_por_hora %}
-                        <div class="heatmap-cell" title="{{ punto.hora }}:00 - {{ punto.total }} tickets" style="--intensidad: {{ punto.intensidad }}">
+                        <div
+                            class="heatmap-cell"
+                            title="{{ punto.hora }}:00 - {{ punto.total }} tickets"
+                            style="--intensidad: {{ punto.intensidad|default:0 }};"
+                        >
                             <span class="heatmap-hour">{{ punto.hora }}h</span>
                             <span class="heatmap-count">{{ punto.total }}</span>
                         </div>
