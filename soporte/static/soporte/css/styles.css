@@ -169,6 +169,15 @@ body {
     filter: brightness(0);
 }
 
+.dropdown-menu-notifications{
+  min-width: 320px;
+  max-width: 420px;
+}
+
+#notif-count-badge{
+  font-size: .7rem;
+}
+
 /* Estilo para los íconos en el menú */
 .list-group-item i {
     width: 1.5rem; /* Espacio para el ícono */

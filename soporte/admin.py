@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import SLARegla, SLACalculo, Ticket, Prioridad, TicketHistory
+from .models import (
+    Notification,
+    Prioridad,
+    SLARegla,
+    SLACalculo,
+    Ticket,
+    TicketHistory,
+)
 
 
 @admin.register(Ticket)
@@ -52,4 +59,11 @@ class TicketHistoryAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('message', 'user', 'type', 'is_read', 'created_at')
+    list_filter = ('type', 'is_read', 'created_at')
+    search_fields = ('message', 'user__username', 'actor__username')
 

@@ -9,6 +9,8 @@ urlpatterns = [
     path("tickets/", views.home, name="home_tickets"),
     path("crear/", views.crear_ticket, name="crear_ticket"),
     path('salir/', views.salir, name="salir"),
+    path('notificaciones/unread/', views.notificaciones_unread, name='notificaciones_unread'),
+    path('notificaciones/', views.lista_notificaciones, name='lista_notificaciones'),
 
     # Gestión de Tickets
     path("ticket/<int:ticket_id>/", views.detalle_ticket, name="detalle_ticket"),
