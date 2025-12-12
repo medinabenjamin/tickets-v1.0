@@ -14,6 +14,12 @@ body {
     min-height: 100vh;
 }
 
+.chart-container-estados {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
 /* Contenedor de marca alineado */
 .navbar-brand{
   padding-top: 0;
