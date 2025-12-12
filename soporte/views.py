@@ -13,8 +13,9 @@ from django.contrib.auth.models import Group, Permission
 from django.core.mail import send_mail
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Avg, Count, Max, ProtectedError, Q
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from .forms import (
@@ -27,11 +28,16 @@ from .forms import (
     UserCreateForm,
     UserUpdateForm,
 )
-from .models import Adjunto, Area, Comment, PerfilUsuario, Prioridad, Ticket
+from .models import Adjunto, Area, Comment, Notification, PerfilUsuario, Prioridad, Ticket
 from .services import log_attachment, update_ticket
 from .utils.permissions import (
     get_app_verbose_name,
     spanish_permission_label,
+)
+from .utils.notifications import (
+    create_notification,
+    get_staff_notifiable_users,
+    notification_link,
 )
 
 # Importaciones para PDF
@@ -83,17 +89,62 @@ def _obtener_ticket_autorizado(request, ticket_id):
 def _comentarios_ticket(ticket, orden='-created_at'):
     """Retorna los comentarios de un ticket en el orden especificado."""
     return Comment.objects.filter(ticket=ticket).order_by(orden)
+
+
+def _mark_notification_as_read(request, notif_id):
+    if not notif_id:
+        return
+    try:
+        notif_obj = Notification.objects.get(id=notif_id, user=request.user)
+    except Notification.DoesNotExist:
+        return
+    if not notif_obj.is_read:
+        notif_obj.is_read = True
+        notif_obj.save(update_fields=['is_read'])
     
 # --- VISTAS PRINCIPALES ---
 @login_required
 def inicio(request):
     """Redirige al usuario según su rol."""
     if not request.user.is_authenticated:
-        return redirect('login') 
+        return redirect('login')
     if request.user.is_staff:
         return redirect('dashboard_principal')
     else:
         return redirect('crear_ticket')
+
+
+@login_required
+def notificaciones_unread(request):
+    qs = Notification.objects.filter(user=request.user, is_read=False)
+    recientes = qs.order_by('-created_at')[:10]
+    data = {
+        "count": qs.count(),
+        "notifications": [
+            {
+                "id": notif.id,
+                "message": notif.message,
+                "url": notification_link(notif),
+                "created_at": notif.created_at.strftime("%d/%m/%Y %H:%M"),
+            }
+            for notif in recientes
+        ],
+    }
+    return JsonResponse(data)
+
+
+@login_required
+def lista_notificaciones(request):
+    notifications_qs = Notification.objects.filter(user=request.user).order_by('-created_at')
+    notifications = [
+        {
+            "obj": notif,
+            "link": notification_link(notif),
+        }
+        for notif in notifications_qs
+    ]
+    context = {"notifications": notifications}
+    return render(request, "soporte/notificaciones_list.html", context)
 
 @login_required
 def home(request):
@@ -176,6 +227,7 @@ def home(request):
 
 @login_required
 def detalle_ticket(request, ticket_id):
+    _mark_notification_as_read(request, request.GET.get('notif_id'))
     ticket = _obtener_ticket_autorizado(request, ticket_id)
     if ticket is None:
         return redirect('home_tickets')
@@ -192,6 +244,8 @@ def detalle_ticket(request, ticket_id):
                 return HttpResponseForbidden()
             form_acciones = TechTicketForm(request.POST, instance=ticket)
             if form_acciones.is_valid():
+                estado_anterior = ticket.estado
+                tecnico_anterior = ticket.tecnico_asignado
                 cleaned = form_acciones.cleaned_data
                 changes = {}
                 if 'estado' in cleaned:
@@ -203,10 +257,37 @@ def detalle_ticket(request, ticket_id):
                 comment = request.POST.get('comentario', '').strip() or None
                 update_ticket(ticket, request.user, changes, comment)
                 messages.success(request, "Ticket actualizado.")
+                detalle_url = reverse('detalle_ticket', args=[ticket.id])
+                if ticket.estado != estado_anterior:
+                    create_notification(
+                        'ticket_status_changed',
+                        ticket.solicitante,
+                        f"El ticket #{ticket.id} cambió a {ticket.get_estado_display()}",
+                        detalle_url,
+                        actor=request.user,
+                    )
+                if ticket.tecnico_asignado and ticket.tecnico_asignado != tecnico_anterior:
+                    create_notification(
+                        'ticket_assigned',
+                        ticket.tecnico_asignado,
+                        f"Se te asignó el ticket #{ticket.id}: {ticket.titulo}",
+                        detalle_url,
+                        actor=request.user,
+                    )
                 return redirect('detalle_ticket', ticket_id=ticket.id)
         elif 'cerrar_ticket_submit' in request.POST and request.user.is_staff:
+            estado_anterior = ticket.estado
             update_ticket(ticket, request.user, {'status': 'cerrado'})
             messages.success(request, "Ticket actualizado.")
+            detalle_url = reverse('detalle_ticket', args=[ticket.id])
+            if ticket.estado != estado_anterior:
+                create_notification(
+                    'ticket_status_changed',
+                    ticket.solicitante,
+                    f"El ticket #{ticket.id} cambió a {ticket.get_estado_display()}",
+                    detalle_url,
+                    actor=request.user,
+                )
             return redirect('detalle_ticket', ticket_id=ticket.id)
         elif 'comment_form_submit' in request.POST:
             comment_form = CommentForm(request.POST, request.FILES)
@@ -218,8 +299,28 @@ def detalle_ticket(request, ticket_id):
                 update_ticket(ticket, request.user, {}, comment=new_comment.text)
                 if new_comment.adjunto:
                     log_attachment(ticket, request.user, new_comment.adjunto)
-                if ticket.solicitante != request.user:
-                    pass # Lógica de notificación
+                detalle_url = reverse('detalle_ticket', args=[ticket.id])
+                if request.user.is_staff:
+                    destinatarios = [ticket.solicitante] if ticket.solicitante != request.user else []
+                else:
+                    destinatarios = []
+                    if ticket.tecnico_asignado and ticket.tecnico_asignado != request.user:
+                        destinatarios.append(ticket.tecnico_asignado)
+                    else:
+                        destinatarios.extend(
+                            [
+                                user
+                                for user in get_staff_notifiable_users()
+                                if user != request.user
+                            ]
+                        )
+                create_notification(
+                    'ticket_commented',
+                    destinatarios,
+                    f"{request.user.username} comentó el ticket #{ticket.id}: {ticket.titulo}",
+                    detalle_url,
+                    actor=request.user,
+                )
                 return redirect('detalle_ticket', ticket_id=ticket.id)
     context = {
         'ticket': ticket, 'comments': comments,
@@ -277,6 +378,30 @@ def crear_ticket(request):
             if archivo_adjunto:
                 adjunto = Adjunto.objects.create(ticket=ticket, archivo=archivo_adjunto, subido_por=request.user)
                 log_attachment(ticket, request.user, adjunto.archivo)
+            detalle_url = reverse('detalle_ticket', args=[ticket.id])
+            staff_users = [u for u in get_staff_notifiable_users() if u != request.user]
+            create_notification(
+                'ticket_created',
+                staff_users,
+                f"Se ha levantado un nuevo ticket #{ticket.id}: {ticket.titulo}",
+                detalle_url,
+                actor=request.user,
+            )
+            create_notification(
+                'ticket_created',
+                request.user,
+                f"Tu ticket #{ticket.id} fue creado correctamente.",
+                detalle_url,
+                actor=request.user,
+            )
+            if tecnico_disponible:
+                create_notification(
+                    'ticket_assigned',
+                    tecnico_disponible,
+                    f"Se te asignó el ticket #{ticket.id}: {ticket.titulo}",
+                    detalle_url,
+                    actor=request.user,
+                )
             return redirect('home_tickets')
     else:
         form = TicketForm(user=request.user)

@@ -58,6 +58,24 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
+                        <li class="nav-item dropdown me-3">
+                            <a class="nav-link position-relative" href="#" id="notifDropdown"
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bell"></i>
+                                <span id="notif-count-badge"
+                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                    0
+                                </span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-notifications" aria-labelledby="notifDropdown">
+                                <h6 class="dropdown-header">Notificaciones</h6>
+                                <div id="notif-list" style="max-height: 300px; overflow-y: auto;"></div>
+                                <div><hr class="dropdown-divider"></div>
+                                <a class="dropdown-item text-center small" href="{% url 'lista_notificaciones' %}">
+                                    Ver todas
+                                </a>
+                            </div>
+                        </li>
                         <li class="nav-item active">
                             <span class="nav-link">Bienvenido, {{ request.user.username }}</span>
                         </li>
@@ -138,6 +156,55 @@
             mql.addListener(syncViewport);
           }
           syncViewport();
+        })();
+    </script>
+    <script>
+        (function(){
+          const badge = document.getElementById('notif-count-badge');
+          const list = document.getElementById('notif-list');
+          const endpoint = "{% url 'notificaciones_unread' %}";
+          if (!badge || !list || !endpoint){
+            return;
+          }
+
+          function renderNotifications(data){
+            const items = data.notifications || [];
+            badge.textContent = data.count || 0;
+            badge.classList.toggle('d-none', !data.count);
+            list.innerHTML = '';
+
+            if (!items.length){
+              const emptyEl = document.createElement('p');
+              emptyEl.className = 'dropdown-item text-muted small mb-0';
+              emptyEl.textContent = 'Sin notificaciones nuevas';
+              list.appendChild(emptyEl);
+              return;
+            }
+
+            items.forEach(item => {
+              const link = document.createElement('a');
+              link.className = 'dropdown-item small';
+              link.href = item.url || '#';
+              link.innerHTML = `<div>${item.message}</div><div class="text-muted">${item.created_at}</div>`;
+              list.appendChild(link);
+            });
+          }
+
+          async function loadNotifications(){
+            try {
+              const response = await fetch(endpoint, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+              if (!response.ok){
+                return;
+              }
+              const data = await response.json();
+              renderNotifications(data);
+            } catch (error){
+              console.error('Error cargando notificaciones', error);
+            }
+          }
+
+          loadNotifications();
+          setInterval(loadNotifications, 10000);
         })();
     </script>
     {% block extra_js %}{% endblock %}
