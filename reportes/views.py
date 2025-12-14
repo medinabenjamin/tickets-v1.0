@@ -19,9 +19,12 @@ def dashboard_reportes(request):
     
     # 1. Tiempo Promedio de Resolución GLOBAL
     avg_resolution_time_global = Ticket.objects.filter(
-        estado__in=['resuelto', 'cerrado'], 
+        estado__in=['resuelto', 'cerrado'],
         tiempo_resolucion__isnull=False
     ).aggregate(avg_time=Avg('tiempo_resolucion'))['avg_time']
+
+    if avg_resolution_time_global is not None:
+        avg_resolution_time_global = str(avg_resolution_time_global).split(".")[0]
 
     # 2. Tiempo Promedio de Resolución POR TÉCNICO
     resolution_by_tech = User.objects.filter(
