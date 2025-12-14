@@ -69,7 +69,13 @@ def faq_crear(request):
     else:
         form = FAQForm()
         formset = FAQPasoFormSet()
-    return render(request, 'faq/faq_form.html', {'form': form, 'formset': formset, 'modo': 'crear'})
+    context = {
+        'form': form,
+        'formset': formset,
+        'modo': 'crear',
+        'faq_tiene_pasos': False,
+    }
+    return render(request, 'faq/faq_form.html', context)
 
 
 @login_required
@@ -105,7 +111,13 @@ def faq_editar(request, pk):
     else:
         form = FAQForm(instance=faq)
         formset = FAQPasoFormSet(instance=faq)
-    return render(request, 'faq/faq_form.html', {'form': form, 'formset': formset, 'modo': 'editar'})
+    context = {
+        'form': form,
+        'formset': formset,
+        'modo': 'editar',
+        'faq_tiene_pasos': faq.pasos.exists(),
+    }
+    return render(request, 'faq/faq_form.html', context)
 
 
 @login_required
