@@ -42,7 +42,7 @@
         <small class="text-muted">Elige cómo quieres responder la pregunta</small>
       </div>
       <div class="p-3">
-        <div class="btn-group" role="group" aria-label="Tipo de FAQ" id="faqTypeSelector" data-default-type="{{ 'pasos' if faq_tiene_pasos else 'rapida' }}">
+        <div class="btn-group" role="group" aria-label="Tipo de FAQ" id="faqTypeSelector" data-default-type="{% if faq_tiene_pasos %}pasos{% else %}rapida{% endif %}">
           <button type="button" class="btn btn-outline-primary" data-faq-type="rapida">
             <i class="fas fa-message"></i> Respuesta breve
           </button>
