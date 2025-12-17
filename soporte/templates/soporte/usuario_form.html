@@ -90,7 +90,7 @@
                 <hr class="my-4" />
                 <p class="fw-semibold mb-3">Roles y estado</p>
                 <div class="row g-3">
-                    <div class="col-12 col-md-8">
+                    <div class="col-12 col-lg-8">
                         <label class="form-label" for="{{ form.groups.id_for_label }}">Roles asignados</label>
                         {% render_field form.groups class="form-select" %}
                         {% if form.groups.help_text %}<div class="form-text">{{ form.groups.help_text }}</div>{% endif %}
@@ -98,20 +98,30 @@
                             <div class="invalid-feedback d-block">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    <div class="col-12 col-md-2 d-flex align-items-end">
-                        <div class="form-check form-switch">
-                            {% render_field form.is_active class="form-check-input" %}
-                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Activo</label>
+                    <div class="col-12 col-lg-4 d-flex flex-column gap-3">
+                        <div class="d-flex align-items-center justify-content-between p-3 border rounded-3 bg-light">
+                            <div class="me-3">
+                                <p class="fw-semibold mb-1">Estado</p>
+                                <small class="text-muted">Habilita o deshabilita el acceso al sistema.</small>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                                {% render_field form.is_active class="form-check-input" %}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Activo</label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-12 col-md-2 d-flex align-items-end">
-                        <div class="form-check form-switch">
-                            {% render_field form.es_critico class="form-check-input" %}
-                            <label class="form-check-label" for="{{ form.es_critico.id_for_label }}">Usuario crítico</label>
-                            {% if form.es_critico.help_text %}<div class="form-text">{{ form.es_critico.help_text }}</div>{% endif %}
-                            {% for error in form.es_critico.errors %}
-                                <div class="invalid-feedback d-block">{{ error }}</div>
-                            {% endfor %}
+                        <div class="d-flex align-items-center justify-content-between p-3 border rounded-3 bg-light">
+                            <div class="me-3">
+                                <p class="fw-semibold mb-1">Usuario crítico</p>
+                                <small class="text-muted">Marca a usuarios con permisos sensibles.</small>
+                                {% if form.es_critico.help_text %}<div class="form-text mb-0">{{ form.es_critico.help_text }}</div>{% endif %}
+                                {% for error in form.es_critico.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-check form-switch m-0">
+                                {% render_field form.es_critico class="form-check-input" %}
+                                <label class="form-check-label" for="{{ form.es_critico.id_for_label }}">Activar</label>
+                            </div>
                         </div>
                     </div>
                 </div>
