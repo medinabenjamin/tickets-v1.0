@@ -1,7 +1,9 @@
 from django import forms
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import Group, User
+from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 
 from .models import Adjunto, Area, Comment, PerfilUsuario, Prioridad, RoleInfo, Ticket
@@ -249,6 +251,7 @@ class UserCreateForm(forms.ModelForm):
     password = forms.CharField(
         widget=forms.PasswordInput,
         label="Contraseña",
+        help_text=password_validation.password_validators_help_text_html(),
     )
     rut = forms.CharField(
         label="RUT",
@@ -293,6 +296,11 @@ class UserCreateForm(forms.ModelForm):
         password_confirm = cleaned_data.get("password_confirm")
         if password and password_confirm and password != password_confirm:
             self.add_error('password_confirm', "Las contraseñas no coinciden.")
+        if password:
+            try:
+                password_validation.validate_password(password)
+            except ValidationError as e:
+                self.add_error('password', e)
         return cleaned_data
 
     def clean_rut(self):
@@ -339,7 +347,10 @@ class UserUpdateForm(forms.ModelForm):
         widget=forms.PasswordInput,
         label="Nueva contraseña",
         required=False,
-        help_text="Déjalo en blanco si no deseas cambiarla.",
+        help_text=mark_safe(
+            "Déjalo en blanco si no deseas cambiarla.<br>" +
+            password_validation.password_validators_help_text_html()
+        ),
     )
     password_confirm = forms.CharField(
         widget=forms.PasswordInput,
@@ -394,6 +405,11 @@ class UserUpdateForm(forms.ModelForm):
         if password or password_confirm:
             if password != password_confirm:
                 self.add_error('password_confirm', "Las contraseñas no coinciden.")
+            if password:
+                try:
+                    password_validation.validate_password(password, self.instance)
+                except ValidationError as e:
+                    self.add_error('password', e)
         return cleaned_data
 
     def clean_rut(self):
