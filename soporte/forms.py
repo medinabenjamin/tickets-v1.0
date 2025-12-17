@@ -208,12 +208,51 @@ class CommentForm(forms.ModelForm):
         }
 
 
+def _normalizar_rut(valor: str) -> str:
+    """Devuelve el RUT en formato canónico sin puntos y con guion."""
+
+    rut_limpio = valor.replace(".", "").replace("-", "").strip().upper()
+    if len(rut_limpio) < 2:
+        return rut_limpio
+    cuerpo, dv = rut_limpio[:-1], rut_limpio[-1]
+    return f"{cuerpo}-{dv}"
+
+
+def rut_es_valido(valor: str) -> bool:
+    """Valida el dígito verificador del RUT chileno."""
+
+    rut_limpio = valor.replace(".", "").replace("-", "").strip().upper()
+    if len(rut_limpio) < 2 or not rut_limpio[:-1].isdigit():
+        return False
+
+    cuerpo, dv_ingresado = rut_limpio[:-1], rut_limpio[-1]
+    multiplicador = 2
+    suma = 0
+    for digito in reversed(cuerpo):
+        suma += int(digito) * multiplicador
+        multiplicador = 2 if multiplicador == 7 else multiplicador + 1
+
+    resto = 11 - (suma % 11)
+    if resto == 11:
+        dv_calculado = "0"
+    elif resto == 10:
+        dv_calculado = "K"
+    else:
+        dv_calculado = str(resto)
+
+    return dv_ingresado == dv_calculado
+
+
 class UserCreateForm(forms.ModelForm):
     """Formulario para crear un nuevo usuario con validación de contraseña."""
 
     password = forms.CharField(
         widget=forms.PasswordInput,
         label="Contraseña",
+    )
+    rut = forms.CharField(
+        label="RUT",
+        help_text="Ingresa el RUT sin puntos y con guion. Ejemplo: 12345678-5",
     )
     password_confirm = forms.CharField(
         widget=forms.PasswordInput,
@@ -256,6 +295,20 @@ class UserCreateForm(forms.ModelForm):
             self.add_error('password_confirm', "Las contraseñas no coinciden.")
         return cleaned_data
 
+    def clean_rut(self):
+        rut = self.cleaned_data.get("rut", "")
+        rut_normalizado = _normalizar_rut(rut)
+
+        if not rut_normalizado or "-" not in rut_normalizado:
+            raise forms.ValidationError("Ingresa un RUT válido con guion.")
+        if not rut_es_valido(rut_normalizado):
+            raise forms.ValidationError("El RUT ingresado no es válido.")
+
+        if PerfilUsuario.objects.filter(rut=rut_normalizado).exists():
+            raise forms.ValidationError("Ya existe un usuario con este RUT.")
+
+        return rut_normalizado
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
@@ -266,9 +319,16 @@ class UserCreateForm(forms.ModelForm):
             if groups is not None:
                 user.groups.set(groups)
             perfil, _ = PerfilUsuario.objects.get_or_create(user=user)
+            perfil_actualizado = False
+            rut = self.cleaned_data.get("rut")
+            if rut and perfil.rut != rut:
+                perfil.rut = rut
+                perfil_actualizado = True
             if perfil.es_critico != es_critico:
                 perfil.es_critico = es_critico
-                perfil.save(update_fields=['es_critico'])
+                perfil_actualizado = True
+            if perfil_actualizado:
+                perfil.save(update_fields=['rut', 'es_critico'])
         return user
 
 
@@ -285,6 +345,10 @@ class UserUpdateForm(forms.ModelForm):
         widget=forms.PasswordInput,
         label="Confirmar contraseña",
         required=False,
+    )
+    rut = forms.CharField(
+        label="RUT",
+        help_text="Ingresa el RUT sin puntos y con guion. Ejemplo: 12345678-5",
     )
     es_critico = forms.BooleanField(
         required=False,
@@ -317,9 +381,11 @@ class UserUpdateForm(forms.ModelForm):
             self.fields['groups'].initial = self.instance.groups.all()
             try:
                 self.fields['es_critico'].initial = self.instance.perfil.es_critico
+                self.fields['rut'].initial = self.instance.perfil.rut or ''
             except PerfilUsuario.DoesNotExist:
                 PerfilUsuario.objects.get_or_create(user=self.instance)
                 self.fields['es_critico'].initial = False
+                self.fields['rut'].initial = ''
 
     def clean(self):
         cleaned_data = super().clean()
@@ -330,10 +396,28 @@ class UserUpdateForm(forms.ModelForm):
                 self.add_error('password_confirm', "Las contraseñas no coinciden.")
         return cleaned_data
 
+    def clean_rut(self):
+        rut = self.cleaned_data.get("rut", "")
+        rut_normalizado = _normalizar_rut(rut)
+
+        if not rut_normalizado or "-" not in rut_normalizado:
+            raise forms.ValidationError("Ingresa un RUT válido con guion.")
+        if not rut_es_valido(rut_normalizado):
+            raise forms.ValidationError("El RUT ingresado no es válido.")
+
+        perfil_qs = PerfilUsuario.objects.filter(rut=rut_normalizado)
+        if self.instance and self.instance.pk:
+            perfil_qs = perfil_qs.exclude(user=self.instance)
+        if perfil_qs.exists():
+            raise forms.ValidationError("Ya existe un usuario con este RUT.")
+
+        return rut_normalizado
+
     def save(self, commit=True):
         user = super().save(commit=False)
         password = self.cleaned_data.get('password')
         es_critico = self.cleaned_data.get('es_critico', False)
+        rut = self.cleaned_data.get('rut')
         if password:
             user.set_password(password)
         if commit:
@@ -342,8 +426,14 @@ class UserUpdateForm(forms.ModelForm):
             if groups is not None:
                 user.groups.set(groups)
             perfil, _ = PerfilUsuario.objects.get_or_create(user=user)
+            perfil_actualizado = False
             if perfil.es_critico != es_critico:
                 perfil.es_critico = es_critico
-                perfil.save(update_fields=['es_critico'])
+                perfil_actualizado = True
+            if rut and perfil.rut != rut:
+                perfil.rut = rut
+                perfil_actualizado = True
+            if perfil_actualizado:
+                perfil.save(update_fields=['rut', 'es_critico'])
             Ticket.objects.filter(solicitante=user).update(solicitante_critico=es_critico)
         return user

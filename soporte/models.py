@@ -25,6 +25,14 @@ class PerfilUsuario(models.Model):
         verbose_name="Usuario crítico",
         help_text="Si está marcado, los tickets de este usuario tendrán prioridad visible.",
     )
+    rut = models.CharField(
+        max_length=12,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="RUT",
+        help_text="Número de RUT en formato 12345678-9",
+    )
 
     class Meta:
         verbose_name = "Perfil de usuario"

@@ -57,6 +57,14 @@
                             <div class="invalid-feedback d-block">{{ error }}</div>
                         {% endfor %}
                     </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="{{ form.rut.id_for_label }}">RUT</label>
+                        {% render_field form.rut class="form-control" placeholder="12345678-5" %}
+                        {% if form.rut.help_text %}<div class="form-text">{{ form.rut.help_text }}</div>{% endif %}
+                        {% for error in form.rut.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
                 </div>
 
                 <hr class="my-4" />
