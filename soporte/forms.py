@@ -9,6 +9,9 @@ from django.utils.text import slugify
 from .models import Adjunto, Area, Comment, PerfilUsuario, Prioridad, RoleInfo, Ticket
 from .validators import IMAGE_ACCEPT_ATTR, image_file_validator
 
+STAFF_ROLE_NAMES = {"tecnico", "técnico", "administrador", "admin"}
+SUPERUSER_ROLE_NAMES = {"administrador", "admin"}
+
 
 class TicketForm(forms.ModelForm):
     adjunto = forms.FileField(
@@ -336,11 +339,11 @@ class UserCreateForm(forms.ModelForm):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
         es_critico = self.cleaned_data.get('es_critico', False)
+        groups = list(self.cleaned_data.get('groups') or [])
+        _apply_role_flags_from_groups(user, groups)
         if commit:
             user.save()
-            groups = self.cleaned_data.get('groups')
-            if groups is not None:
-                user.groups.set(groups)
+            user.groups.set(groups)
             perfil, _ = PerfilUsuario.objects.get_or_create(user=user)
             perfil_actualizado = False
             rut = self.cleaned_data.get("rut")
@@ -451,11 +454,11 @@ class UserUpdateForm(forms.ModelForm):
         rut = self.cleaned_data.get('rut')
         if password:
             user.set_password(password)
+        groups = list(self.cleaned_data.get('groups') or [])
+        _apply_role_flags_from_groups(user, groups)
         if commit:
             user.save()
-            groups = self.cleaned_data.get('groups')
-            if groups is not None:
-                user.groups.set(groups)
+            user.groups.set(groups)
             perfil, _ = PerfilUsuario.objects.get_or_create(user=user)
             perfil_actualizado = False
             if perfil.es_critico != es_critico:
@@ -468,3 +471,19 @@ class UserUpdateForm(forms.ModelForm):
                 perfil.save(update_fields=['rut', 'es_critico'])
             Ticket.objects.filter(solicitante=user).update(solicitante_critico=es_critico)
         return user
+
+
+def _apply_role_flags_from_groups(user: User, groups):
+    """
+    Ajusta los flags de staff/superusuario según los roles seleccionados.
+
+    Se evalúan los nombres de los grupos para evitar depender de IDs o permisos
+    específicos. Esto permite que el cambio de rol surta efecto inmediato en
+    la sesión del usuario sin pasos adicionales.
+    """
+    group_names = {group.name.strip().lower() for group in groups}
+    should_be_superuser = bool(group_names & SUPERUSER_ROLE_NAMES)
+    should_be_staff = should_be_superuser or bool(group_names & STAFF_ROLE_NAMES)
+
+    user.is_superuser = should_be_superuser
+    user.is_staff = should_be_staff
