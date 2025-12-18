@@ -160,6 +160,24 @@ body {
   z-index: 1030; /* > sidebar, > charts */
 }
 
+.navbar-shell{
+  gap: .75rem;
+}
+
+@media (max-width: 991.98px){
+  .navbar-shell{ flex-wrap: wrap; }
+  .navbar-nav{ flex-direction: row; align-items: center; gap: .75rem; }
+  .navbar-nav .nav-item{ margin-left: 0; }
+  .main-navbar-brand{ margin-right: auto; }
+}
+
+@media (max-width: 575.98px){
+  .navbar-shell{ row-gap: .35rem; }
+  .navbar-shell > .sidebar-toggle-btn{ order: 1; }
+  .main-navbar-brand{ order: 2; width: 100%; justify-content: center; }
+  .navbar-nav{ order: 3; width: 100%; justify-content: flex-end; }
+}
+
 .main-navbar-brand {
     font-weight: 700;
     color: #212529;
@@ -170,8 +188,9 @@ body {
 }
 
 .dropdown-menu-notifications{
-  min-width: 320px;
-  max-width: 420px;
+  min-width: 280px;
+  width: min(380px, calc(100vw - 1.5rem));
+  max-width: 100%;
 }
 
 #notif-count-badge{
@@ -186,6 +205,11 @@ body {
 /* Layout general */
 .main-container {
     padding: 1.5rem 2rem;
+}
+
+@media (max-width: 767.98px){
+  .main-navbar-brand .brand-text{ font-size: .9rem; }
+  .main-container{ padding: 1.25rem 1rem 1.5rem; }
 }
 
 /* Optional: al imprimir, no fijo */
