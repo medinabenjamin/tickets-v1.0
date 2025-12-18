@@ -9,6 +9,17 @@
     <h2 class="page-title">Detalle del Ticket #{{ ticket.id }}</h2>
     <p class="page-subtitle">{{ ticket.titulo }}</p>
 
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="card-custom mb-4">
