@@ -235,6 +235,15 @@ body {
     outline-offset: 4px;
 }
 
+.scrollable-section{
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: .25rem;
+}
+@media (max-width: 767.98px){
+  .scrollable-section{ max-height: 300px; }
+}
+
 .card-hover {
     transition: transform .2s ease, box-shadow .2s ease;
 }
