@@ -10,6 +10,8 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from .validators import ALLOWED_IMAGE_EXTENSIONS, image_file_validator
+
 User = get_user_model()
 
 
@@ -329,7 +331,12 @@ class Comment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
     text = models.TextField()
-    adjunto = models.FileField(upload_to='adjuntos_comentarios/', null=True, blank=True)
+    adjunto = models.FileField(
+        upload_to='adjuntos_comentarios/',
+        null=True,
+        blank=True,
+        validators=[image_file_validator],
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -339,13 +346,18 @@ class Comment(models.Model):
         """Verifica si el adjunto es una imagen para mostrar vista previa."""
         if not self.adjunto:
             return False
-        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-        return any(self.adjunto.name.lower().endswith(ext) for ext in image_extensions)
+        return any(
+            self.adjunto.name.lower().endswith(f".{ext}")
+            for ext in ALLOWED_IMAGE_EXTENSIONS
+        )
 
 
 class Adjunto(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='adjuntos')
-    archivo = models.FileField(upload_to='adjuntos_tickets/')
+    archivo = models.FileField(
+        upload_to='adjuntos_tickets/',
+        validators=[image_file_validator],
+    )
     subido_por = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
@@ -353,8 +365,10 @@ class Adjunto(models.Model):
         return os.path.basename(self.archivo.name)
 
     def is_image(self):
-        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-        return any(self.archivo.name.lower().endswith(ext) for ext in image_extensions)
+        return any(
+            self.archivo.name.lower().endswith(f".{ext}")
+            for ext in ALLOWED_IMAGE_EXTENSIONS
+        )
 
 
 class TicketHistory(models.Model):
