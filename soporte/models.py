@@ -359,6 +359,7 @@ class Adjunto(models.Model):
 
 class TicketHistory(models.Model):
     class Action(models.TextChoices):
+        CREATED = "CREATED", _("Creación")
         STATUS = "STATUS", _("Estado")
         PRIORITY = "PRIORITY", _("Prioridad")
         ASSIGNEE = "ASSIGNEE", _("Técnico")

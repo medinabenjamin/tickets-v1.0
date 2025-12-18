@@ -28,8 +28,8 @@ from .forms import (
     UserCreateForm,
     UserUpdateForm,
 )
-from .models import Adjunto, Area, Comment, Notification, PerfilUsuario, Prioridad, Ticket
-from .services import log_attachment, update_ticket
+from .models import Adjunto, Area, Comment, Notification, PerfilUsuario, Prioridad, Ticket, TicketHistory
+from .services import log_attachment, log_history, update_ticket
 from .utils.permissions import (
     get_app_verbose_name,
     spanish_permission_label,
@@ -374,6 +374,36 @@ def crear_ticket(request):
             if tecnico_disponible:
                 ticket.tecnico_asignado = tecnico_disponible
             ticket.save()
+            log_history(
+                ticket,
+                request.user,
+                TicketHistory.Action.CREATED,
+                'ticket',
+                new=f"Ticket #{ticket.id} creado",
+            )
+            log_history(
+                ticket,
+                request.user,
+                TicketHistory.Action.STATUS,
+                'estado',
+                new=ticket.get_estado_display(),
+            )
+            if ticket.prioridad:
+                log_history(
+                    ticket,
+                    request.user,
+                    TicketHistory.Action.PRIORITY,
+                    'prioridad',
+                    new=getattr(ticket.prioridad, 'nombre', ticket.prioridad),
+                )
+            if ticket.tecnico_asignado:
+                log_history(
+                    ticket,
+                    request.user,
+                    TicketHistory.Action.ASSIGNEE,
+                    'tecnico_asignado',
+                    new=getattr(ticket.tecnico_asignado, 'username', ticket.tecnico_asignado),
+                )
             archivo_adjunto = form.cleaned_data.get('adjunto')
             if archivo_adjunto:
                 adjunto = Adjunto.objects.create(ticket=ticket, archivo=archivo_adjunto, subido_por=request.user)
