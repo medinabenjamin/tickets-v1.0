@@ -127,34 +127,36 @@
                     <i class="fas fa-comments"></i> Comentarios y adjuntos
                 </div>
                 <div class="card-body">
-                    {% for comment in comments %}
-                        <div class="d-flex mb-4">
-                            <div class="flex-shrink-0 me-3"><i class="fas fa-user-circle fa-2x text-muted"></i></div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <h6 class="fw-bold mb-0">{{ comment.author.username }}</h6>
-                                    <small class="text-muted">{{ comment.created_at|date:"d M Y, H:i" }}</small>
-                                </div>
-                                <p class="mb-0">{{ comment.text|linebreaks }}</p>
-
-                                {% if comment.adjunto %}
-                                    <div class="mt-2 p-2 bg-light border rounded" style="max-width: 300px;">
-                                    {% if comment.is_image %}
-                                        <a href="{{ comment.adjunto.url }}" target="_blank">
-                                            <img src="{{ comment.adjunto.url }}" class="img-fluid rounded border" alt="Adjunto">
-                                        </a>
-                                    {% else %}
-                                        <a href="{{ comment.adjunto.url }}" target="_blank" class="text-decoration-none">
-                                            <i class="fas fa-file-alt me-2"></i> {{ comment.adjunto.name|cut:"adjuntos_comentarios/" }}
-                                        </a>
-                                    {% endif %}
+                    <div class="scrollable-section">
+                        {% for comment in comments %}
+                            <div class="d-flex mb-4">
+                                <div class="flex-shrink-0 me-3"><i class="fas fa-user-circle fa-2x text-muted"></i></div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="fw-bold mb-0">{{ comment.author.username }}</h6>
+                                        <small class="text-muted">{{ comment.created_at|date:"d M Y, H:i" }}</small>
                                     </div>
-                                {% endif %}
+                                    <p class="mb-0">{{ comment.text|linebreaks }}</p>
+
+                                    {% if comment.adjunto %}
+                                        <div class="mt-2 p-2 bg-light border rounded" style="max-width: 300px;">
+                                        {% if comment.is_image %}
+                                            <a href="{{ comment.adjunto.url }}" target="_blank">
+                                                <img src="{{ comment.adjunto.url }}" class="img-fluid rounded border" alt="Adjunto">
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ comment.adjunto.url }}" target="_blank" class="text-decoration-none">
+                                                <i class="fas fa-file-alt me-2"></i> {{ comment.adjunto.name|cut:"adjuntos_comentarios/" }}
+                                            </a>
+                                        {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
-                    {% empty %}
-                        <p class="text-muted">No hay comentarios en este ticket aún.</p>
-                    {% endfor %}
+                        {% empty %}
+                            <p class="text-muted">No hay comentarios en este ticket aún.</p>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 
@@ -164,55 +166,57 @@
                 </div>
                 <div class="card-body">
                     {% if historial %}
-                        <ul class="timeline list-unstyled mb-0">
-                            {% for h in historial %}
-                                <li class="timeline-item mb-3">
-                                    <div class="d-flex align-items-start">
-                                        <div class="timeline-bullet me-2">
-                                            {% if h.action == 'STATUS' %}<i class="fas fa-flag"></i>
-                                            {% elif h.action == 'PRIORITY' %}<i class="fas fa-bolt"></i>
-                                            {% elif h.action == 'ASSIGNEE' %}<i class="fas fa-user-cog"></i>
-                                            {% elif h.action == 'DESCRIPTION' %}<i class="fas fa-align-left"></i>
-                                            {% elif h.action == 'ATTACH_ADD' %}<i class="fas fa-paperclip"></i>
-                                            {% elif h.action == 'ATTACH_DEL' %}<i class="fas fa-trash"></i>
-                                            {% elif h.action == 'COMMENT' %}<i class="fas fa-comment-dots"></i>
-                                            {% else %}<i class="fas fa-circle"></i>{% endif %}
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="small text-muted">
-                                                {{ h.created_at|date:"d M Y, H:i" }} — {{ h.actor.username|default:"Sistema" }}
+                        <div class="scrollable-section">
+                            <ul class="timeline list-unstyled mb-0">
+                                {% for h in historial %}
+                                    <li class="timeline-item mb-3">
+                                        <div class="d-flex align-items-start">
+                                            <div class="timeline-bullet me-2">
+                                                {% if h.action == 'STATUS' %}<i class="fas fa-flag"></i>
+                                                {% elif h.action == 'PRIORITY' %}<i class="fas fa-bolt"></i>
+                                                {% elif h.action == 'ASSIGNEE' %}<i class="fas fa-user-cog"></i>
+                                                {% elif h.action == 'DESCRIPTION' %}<i class="fas fa-align-left"></i>
+                                                {% elif h.action == 'ATTACH_ADD' %}<i class="fas fa-paperclip"></i>
+                                                {% elif h.action == 'ATTACH_DEL' %}<i class="fas fa-trash"></i>
+                                                {% elif h.action == 'COMMENT' %}<i class="fas fa-comment-dots"></i>
+                                                {% else %}<i class="fas fa-circle"></i>{% endif %}
                                             </div>
-                                            <div>
-                                                {% if h.action == 'STATUS' %}
-                                                    Estado: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
-                                                {% elif h.action == 'PRIORITY' %}
-                                                    Prioridad: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
-                                                    {% if h.metadata.deadline_old or h.metadata.deadline_new %}
-                                                      <span class="text-muted small ms-2">SLA: {{ h.metadata.deadline_old|default:"—" }} → {{ h.metadata.deadline_new|default:"—" }}</span>
+                                            <div class="flex-grow-1">
+                                                <div class="small text-muted">
+                                                    {{ h.created_at|date:"d M Y, H:i" }} — {{ h.actor.username|default:"Sistema" }}
+                                                </div>
+                                                <div>
+                                                    {% if h.action == 'STATUS' %}
+                                                        Estado: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
+                                                    {% elif h.action == 'PRIORITY' %}
+                                                        Prioridad: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
+                                                        {% if h.metadata.deadline_old or h.metadata.deadline_new %}
+                                                          <span class="text-muted small ms-2">SLA: {{ h.metadata.deadline_old|default:"—" }} → {{ h.metadata.deadline_new|default:"—" }}</span>
+                                                        {% endif %}
+                                                    {% elif h.action == 'ASSIGNEE' %}
+                                                        Técnico: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
+                                                    {% elif h.action == 'TITLE' %}
+                                                        Título actualizado
+                                                    {% elif h.action == 'DESCRIPTION' %}
+                                                        Descripción actualizada
+                                                    {% elif h.action == 'CATEGORY' %}
+                                                        Categoría: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
+                                                    {% elif h.action == 'AREA' %}
+                                                        Área: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
+                                                    {% elif h.action == 'ATTACH_ADD' %}
+                                                        Adjunto agregado: <strong>{{ h.new_value }}</strong>
+                                                    {% elif h.action == 'ATTACH_DEL' %}
+                                                        Adjunto eliminado: <strong>{{ h.new_value }}</strong>
+                                                    {% elif h.action == 'COMMENT' %}
+                                                        <em>{{ h.new_value }}</em>
                                                     {% endif %}
-                                                {% elif h.action == 'ASSIGNEE' %}
-                                                    Técnico: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
-                                                {% elif h.action == 'TITLE' %}
-                                                    Título actualizado
-                                                {% elif h.action == 'DESCRIPTION' %}
-                                                    Descripción actualizada
-                                                {% elif h.action == 'CATEGORY' %}
-                                                    Categoría: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
-                                                {% elif h.action == 'AREA' %}
-                                                    Área: <strong>{{ h.old_value|default:"—" }}</strong> → <strong>{{ h.new_value|default:"—" }}</strong>
-                                                {% elif h.action == 'ATTACH_ADD' %}
-                                                    Adjunto agregado: <strong>{{ h.new_value }}</strong>
-                                                {% elif h.action == 'ATTACH_DEL' %}
-                                                    Adjunto eliminado: <strong>{{ h.new_value }}</strong>
-                                                {% elif h.action == 'COMMENT' %}
-                                                    <em>{{ h.new_value }}</em>
-                                                {% endif %}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        </ul>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     {% else %}
                         <div class="text-muted">Sin movimientos aún.</div>
                     {% endif %}
