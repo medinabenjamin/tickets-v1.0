@@ -7,10 +7,20 @@ from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 
 from .models import Adjunto, Area, Comment, PerfilUsuario, Prioridad, RoleInfo, Ticket
+from .validators import IMAGE_ACCEPT_ATTR, image_file_validator
 
 
 class TicketForm(forms.ModelForm):
-    adjunto = forms.FileField(required=False, label="Adjuntar archivo")
+    adjunto = forms.FileField(
+        required=False,
+        label="Adjuntar archivo",
+        validators=[image_file_validator],
+        widget=forms.ClearableFileInput(
+            attrs={
+                "accept": IMAGE_ACCEPT_ATTR,
+            }
+        ),
+    )
 
     class Meta:
         model = Ticket
@@ -202,7 +212,12 @@ class CommentForm(forms.ModelForm):
         fields = ['text', 'adjunto']
         widgets = {
             'text': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Escribe tu respuesta o actualización aquí...'}),
-            'adjunto': forms.FileInput(attrs={'class': 'form-control form-control-sm'}),
+            'adjunto': forms.FileInput(
+                attrs={
+                    'class': 'form-control form-control-sm',
+                    'accept': IMAGE_ACCEPT_ATTR,
+                }
+            ),
         }
         labels = {
             'text': 'Comentario:',

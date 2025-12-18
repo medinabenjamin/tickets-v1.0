@@ -1,7 +1,15 @@
 import re
 
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.utils.translation import gettext as _
+
+ALLOWED_IMAGE_EXTENSIONS = ["jpg", "jpeg", "png"]
+IMAGE_ACCEPT_ATTR = ",".join(f".{ext}" for ext in ALLOWED_IMAGE_EXTENSIONS)
+image_file_validator = FileExtensionValidator(
+    allowed_extensions=ALLOWED_IMAGE_EXTENSIONS,
+    message=_("Solo se permiten archivos JPG, JPEG o PNG."),
+)
 
 
 class StrongPasswordValidator:
